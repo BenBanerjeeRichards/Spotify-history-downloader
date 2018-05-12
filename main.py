@@ -1,22 +1,10 @@
-import os
-import requests
 import pymongo
-import logging
-import time
-import sys
+import read
 
+from spotify import *
 class DownloadException(Exception):
     pass
-
-class Credentials:
-    def __init__(self, client_id, client_secret, refresh):
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.refresh_token =  refresh
-
-    def __str__(self):
-        return "client_id: {}\nclient_secret:{}\nrefresh_token:{}".format(self.client_id, self.client_secret, self.refresh_token)
-
+    
 def insert(tracks):
     logging.info("Retrieved 50 songs from spotify")
 
@@ -34,36 +22,6 @@ def insert(tracks):
     if len(tracks) > 0:
         spotify.tracks.insert_many(tracks)
     client.close()  # TODO can we use with..as clause?
-
-def get_access_token(credentials, attempts=0):
-    if attempts > 10:
-        logging.error("Failed to get access token after 10 attempts")
-        raise DownloadException("Failed to get access token")
-
-    form_data = {
-        "grant_type": "refresh_token", 
-        "refresh_token": credentials.refresh_token,
-        "client_id": credentials.client_id,
-        "client_secret": credentials.client_secret
-        }
-
-    try:
-        response = requests.post("https://accounts.spotify.com/api/token", data=form_data)
-        response.raise_for_status()
-    except Exception as e:
-        logging.exception("Failed to get access token, retrying")
-        time.sleep(pow(attempts, 1.5))
-        return get_access_token(credentials, attempts + 1)
-
-    logging.info("Got spotify access token")
-    return response.json()["access_token"]
-
-def get_credentials():
-    return Credentials(os.environ["SPOTIFY_CLIENT_ID"], os.environ["SPOTIFY_CLIENT_SECRET"], os.environ["SPOTIFY_REFRESH_TOKEN"])
-
-def get_recently_played(creds, access_token):
-    res = requests.get("https://api.spotify.com/v1/me/player/recently-played", params={"limit": 50}, headers={"Authorization": "Bearer {}".format(access_token)})
-    return res.json()
 
 def remove_tracks_before_inc(tracks, stop_at_track):
     new = []
@@ -88,8 +46,12 @@ def main():
         datefmt='%Y-%m-%d %H:%M:%S', filename='output.log')
 
     creds = get_credentials()
-    token = get_access_token(creds)
-    j = get_recently_played(creds, token)
+    j = get_recently_played(creds)
     insert(j["items"])
+
+    # Update stuff
+    read.update_albums()
+    read.update_artists()
+    read.update_features()
 
 if __name__ == "__main__":main()
