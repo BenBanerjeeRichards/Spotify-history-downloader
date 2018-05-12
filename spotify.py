@@ -3,8 +3,6 @@ import os
 import time
 
 import requests
-from scipy.sparse import extract
-
 
 class Credentials:
     def __init__(self, client_id, client_secret, refresh):
