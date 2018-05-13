@@ -27,7 +27,6 @@ def get_credentials():
 def get_access_token(credentials, attempts=0):
     if attempts > 10:
         logging.error("Failed to get access token after 10 attempts")
-        raise DownloadException("Failed to get access token")
 
     form_data = {
         "grant_type": "refresh_token",
@@ -63,6 +62,7 @@ def chunks(l, n):
 def spotify_multiple_req(url, ids, creds, extract_list, max_ids=20):
     data = []
     head = {"Authorization": "Bearer {}".format(creds.access_token)}
+    ids = list(set(ids))  # don't make duplicate requests
 
     for id_list in chunks(ids, max_ids):
         res = requests.get(url, params={"ids": ",".join(id_list)}, headers=head)
