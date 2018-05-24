@@ -49,7 +49,7 @@ def get_access_token(credentials, attempts=0):
 
 
 def get_recently_played(creds):
-    head = headers = {"Authorization": "Bearer {}".format(creds.access_token)}
+    head = {"Authorization": "Bearer {}".format(creds.access_token)}
     res = requests.get("https://api.spotify.com/v1/me/player/recently-played", params={"limit": 50}, headers=head)
     return res.json()
 
@@ -93,3 +93,8 @@ def get_track_features(ids, creds):
 
     return spotify_multiple_req("https://api.spotify.com/v1/audio-features", ids, creds, extract, 100)
 
+
+def get_current_playback(creds):
+    head = {"Authorization": "Bearer {}".format(creds.access_token)}
+    res = requests.get("https://api.spotify.com/v1/me/player", headers=head)
+    return res.json()

@@ -3,6 +3,7 @@ import csv
 import pymongo
 from spotify import *
 
+
 def basic():
     client = pymongo.MongoClient("localhost", 27017)
     spotify = client.spotify

@@ -51,13 +51,13 @@ def time_listening(songs):
     for track in songs:
         total_seconds += track["duration_ms"] / 1000
         if track["diff"] < -1.5:    # SKIP
-            total_seconds -= track["diff"]
+            total_seconds += track["diff"]
     return total_seconds
 
 def main():
     data = load("out.csv")
     add_time_offsets(data)
     print(data[-1])
-    print(time_listening(data))
+    print(time_listening(data) / (60 * 60))
 
 if __name__ == "__main__": main()

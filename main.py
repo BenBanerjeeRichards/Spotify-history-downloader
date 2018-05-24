@@ -1,6 +1,6 @@
 import pymongo
 import read
-
+import time
 from spotify import *
 class DownloadException(Exception):
     pass
@@ -46,6 +46,11 @@ def main():
         datefmt='%Y-%m-%d %H:%M:%S', filename='output.log')
 
     creds = get_credentials()
+    start = time.time()
+    print(get_current_playback(creds))
+    print((time.time() - start) * 1000)
+    return
+
     j = get_recently_played(creds)
     insert(j["items"])
 
