@@ -99,6 +99,6 @@ def get_current_playback(creds):
     res = requests.get("https://api.spotify.com/v1/me/player", headers=head)
 
     # Sometimes if spotify not open anywhere
-    if len(res.text()) == 0:
+    if len(res.text) == 0:
         return None
     return res.json()
