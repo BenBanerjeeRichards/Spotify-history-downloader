@@ -1,13 +1,13 @@
 import time
 
 import pymongo
-
+import logging
 from spotify import get_current_playback, get_credentials
 
-REQ_PER_SECOND = 3  # Goal number of updates of state per second
+REQ_PER_SECOND = 5  # Goal number of updates of state per second
 REFRESH_CRED_SECS = 30 * 60  # Refresh credentials every 30 minutes
 BATCH_SIZE_INSERT = 3 * 60  # Once per minute
-
+SLEEP_AFTER_FAILURE_BASE = 0.5
 
 def get_player_state(creds):
     state_from_api = get_current_playback(creds)
@@ -20,7 +20,6 @@ def get_player_state(creds):
         "repeat_state": state_from_api["repeat_state"],
         "track_id": state_from_api["item"]["id"],
     }
-
     return state
 
 
@@ -28,6 +27,7 @@ def store_player_states(states):
     client = pymongo.MongoClient("localhost", 27017)
     spotify = client.spotify
     spotify.player.insert_many(states)
+    logging.info("Inserted {} states".format(len(states)))
 
 
 def run():
@@ -64,16 +64,31 @@ def run():
         if delay_ms < 0:
             delay_ms = 0
         time.sleep(delay_ms)
-        print(len(states))
         if batch_count > BATCH_SIZE_INSERT:
-            print("STORING {}".format(len(states)))
             store_player_states(states)
             batch_count = 0
             states = []
 
+        if batch_count % 10 == 0:
+            logging.info("Current sleep time: {}".format(delay_ms))
+            rate = 1 / avg_time
+            if rate > REQ_PER_SECOND:
+                rate = REQ_PER_SECOND
+
+            logging.info("Current average player access rate: {}/second".format(rate))
+
 
 def main():
-    run()
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        level=logging.DEBUG,
+        datefmt='%Y-%m-%d %H:%M:%S', filename='player.log')
 
+    try:
+        run()
+    except Exception as e:
+        logging.exception("failed to get tracks")
+        time.sleep(SLEEP_AFTER_FAILURE_BASE)
+        main()
 
 if __name__ == "__main__": main()
