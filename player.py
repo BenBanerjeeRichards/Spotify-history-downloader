@@ -10,16 +10,27 @@ BATCH_SIZE_INSERT = 3 * 60  # Once per minute
 SLEEP_AFTER_FAILURE_BASE = 0.5
 
 def get_player_state(creds):
+    start = time.time()
     state_from_api = get_current_playback(creds)
-    state = {
-        "timestamp": state_from_api["timestamp"],
-        "device": state_from_api["device"],
-        "progress_ms": state_from_api["progress_ms"],
-        "is_playing": state_from_api["is_playing"],
-        "shuffle_state": state_from_api["shuffle_state"],
-        "repeat_state": state_from_api["repeat_state"],
-        "track_id": state_from_api["item"]["id"],
-    }
+    end = time.time()
+
+    if state_from_api is not None:
+        state = {
+            "timestamp": state_from_api["timestamp"],
+            "device": state_from_api["device"],
+            "progress_ms": state_from_api["progress_ms"],
+            "is_playing": state_from_api["is_playing"],
+            "shuffle_state": state_from_api["shuffle_state"],
+            "repeat_state": state_from_api["repeat_state"],
+            "track_id": state_from_api["item"]["id"],
+        }
+    else:
+        state = {
+            # Estimate timestamp
+            "timestamp": time.time() - (start + end) / 2,
+            "progress_ms": 0,
+            "is_playing": False,
+        }
     return state
 
 
@@ -85,6 +96,6 @@ def main():
     except Exception as e:
         logging.exception("failed to get tracks")
         time.sleep(SLEEP_AFTER_FAILURE_BASE)
-        main()
+        main()  # Eventually reaches stack overflow of course
 
 if __name__ == "__main__": main()
