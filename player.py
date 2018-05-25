@@ -71,17 +71,13 @@ def run():
 
         if batch_count % 10 == 0:
             logging.info("Current sleep time: {}".format(delay_ms))
-            rate = 1 / avg_time
-            if rate > REQ_PER_SECOND:
-                rate = REQ_PER_SECOND
-
-            logging.info("Current average player access rate: {}/second".format(rate))
+            logging.info("Current average request time: {}".format(avg_time))
 
 
 def main():
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
-        level=logging.DEBUG,
+        level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S', filename='player.log')
 
     try:
