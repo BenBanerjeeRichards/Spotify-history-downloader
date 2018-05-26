@@ -2,7 +2,7 @@ import csv
 
 import pymongo
 from spotify import *
-
+import sys
 
 def basic():
     client = pymongo.MongoClient("localhost", 27017)
@@ -131,7 +131,20 @@ def main():
         datefmt='%Y-%m-%d %H:%M:%S', filename='output.log')
 
     update_features()
-    track_csv("out.csv")
+
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "recent":
+            client = pymongo.MongoClient("localhost", 27017)
+            spotify = client.spotify
+
+            tracks = spotify.tracks.find({}, sort=[("played_at", pymongo.DESCENDING)])
+            for i, track in enumerate(tracks):
+                print("[{}]: {} - {}".format(
+                    track["played_at"], track["track"]["artists"][0]["name"], track["track"]["name"]))
+                if i == 9:
+                    return
+    else:
+        track_csv("out.csv")
 
 
 if __name__ == "__main__": main()
