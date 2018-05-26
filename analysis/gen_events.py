@@ -6,6 +6,9 @@ def gen_events():
 
     is_playing = None
     track_id = None
+    is_shuffle = None
+    device = None
+    is_repeat = None
 
     states = spotify.player.find({}, sort=[("timestamp", pymongo.ASCENDING)])
     events = []
@@ -24,6 +27,27 @@ def gen_events():
                 new_event = True
                 event["track_id"] = state["track_id"]
                 track_id = state["track_id"]
+
+        if "shuffle_state" in state:
+            if is_shuffle != state["shuffle_state"]:
+                new_event = True
+                event["is_shuffle"] = state["shuffle_state"]
+                is_shuffle = state["shuffle_state"]
+
+        if "repeat_state" in state:
+            if is_repeat != state["repeat_state"]:
+                new_event = True
+                event["is_repeat"] = state["repeat_state"]
+                is_repeat = state["repeat_state"]
+
+        if "device" in state:
+            if device != state["device"]["name"]:
+                new_event = True
+                event["device"] = state["device"]["name"]
+                device = state["device"]["name"]
+
+
+
 
         if new_event:
             event["timestamp"] = state["timestamp"]
