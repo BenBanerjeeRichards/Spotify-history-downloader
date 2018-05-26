@@ -65,7 +65,7 @@ def add_info_to_events(events):
                 event["track"] = track_cache[t_id]["track"]
                 event["artist"] = track_cache[t_id]["artist"]
             else:
-                track_info = spotify.tracks.find_one({"id": t_id})
+                track_info = spotify.tracks.find_one({"track": {"id": t_id}})
                 if track_info is None:
                     # If new track not in db (definitly possible, recently played requires > 30 secs)
                     print("Failed to get track info for track {}".format(t_id))
@@ -77,11 +77,6 @@ def add_info_to_events(events):
                     event["track"] = info["track"]
                     event["artist"] = info["artist"]
                     track_cache[t_id] = info
-
-
-
-
-
 
 def main():
     events = gen_events()
