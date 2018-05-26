@@ -37,7 +37,6 @@ def pretty_recently_played_json(tracks):
     for item in tracks:
         s += "{} - {}\n".format(item["track"]["artists"][0]["name"], item["track"]["name"])
     return s
-#chcp 65001
 
 def main():
     logging.basicConfig(
@@ -45,12 +44,13 @@ def main():
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S', filename='output.log')
 
-    creds = get_credentials()
-    start = time.time()
-    print(get_current_playback(creds))
-    print((time.time() - start) * 1000)
-    return
+    # Disable logging we don't need
+    # O/W we end up with GBs of logs in just 24 hours
+    # (mainly thanks to player state requests, of which there are thousands of)
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+    creds = get_credentials()
     j = get_recently_played(creds)
     insert(j["items"])
 

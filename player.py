@@ -35,10 +35,11 @@ def get_player_state(creds):
 
 
 def store_player_states(states):
+    start = time.time()
     client = pymongo.MongoClient("localhost", 27017)
     spotify = client.spotify
     spotify.player.insert_many(states)
-    logging.info("Inserted {} states".format(len(states)))
+    logging.debug("[INSERT] Inserted {} states in {}".format(len(states), time.time() - start))
 
 
 def run():
@@ -51,6 +52,9 @@ def run():
 
     last_credential_time = time.time()
     creds = get_credentials()
+
+    # Used for logging purposes
+    batch_start_time = time.time()
 
     while True:
         batch_count += 1
@@ -71,7 +75,7 @@ def run():
 
         # Calculate delay time
         avg_time = sum(request_times) / len(request_times)
-        delay_ms = (1 - 3 * avg_time) / 3
+        delay_ms = (1 - REQ_PER_SECOND * avg_time) / REQ_PER_SECOND
         if delay_ms < 0:
             delay_ms = 0
         time.sleep(delay_ms)
@@ -81,15 +85,21 @@ def run():
             states = []
 
         if batch_count % 10 == 0:
-            logging.info("Current sleep time: {}".format(delay_ms))
-            logging.info("Current average request time: {}".format(avg_time))
-
+            end_b = time.time()
+            dt = end_b - batch_start_time
+            rate = 10 / dt
+            logging.debug("[STATUS] start={}, end={}s, dt = {}, sleep_time={}, avg_request_time={}, rate={}"
+                .format(batch_start_time, end_b, dt, delay_ms, avg_time, rate))
+            batch_start_time = end_b
 
 def main():
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
-        level=logging.INFO,
+        level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S', filename='player.log')
+    
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
 
     try:
         run()
