@@ -26,6 +26,7 @@ def gen_events():
                 track_id = state["track_id"]
 
         if new_event:
+            event["timestamp"] = state["timestamp"]
             events.append(event)
     return events
 
