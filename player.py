@@ -27,7 +27,7 @@ def get_player_state(creds):
     else:
         state = {
             # Estimate timestamp
-            "timestamp": time.time() - (start + end) / 2,
+            "timestamp": time.time() * 1000,
             "progress_ms": 0,
             "is_playing": False,
         }
