@@ -65,12 +65,10 @@ def add_info_to_events(events):
                 event["track"] = track_cache[t_id]["track"]
                 event["artist"] = track_cache[t_id]["artist"]
             else:
-                track_info = spotify.tracks.find_one({"track.id": t_id})
+                track_info = spotify.full_tracks.find_one({"id": t_id})
                 if track_info is None:
-                    # If new track not in db (definitly possible, recently played requires > 30 secs)
                     print("Failed to get track info for track {}".format(t_id))
                 else:
-                    track_info = track_info["track"]
                     info = {
                         "track": track_info["name"],
                         "artist": track_info["artists"][0]["name"]
@@ -111,6 +109,20 @@ def main():
     events = gen_events()
     add_info_to_events(events)
     for e in events:
-        print(e)
+        if "repeat" in e:
+            print("Repeat {}".format(e["repeat"]))
+        if "is_shuffle" in e:
+            if e["is_shuffle"]:
+                print("Shuffle on")
+            else:
+                print("Shuffle off")
+        if "is_playing" in e and e["is_playing"] == True:
+            print("Play")
+        if "device" in e:
+            print("Started listening on device {}".format(e["device"]))
+        if "track" in e:
+            print("Started playing {} by {}".format(e["track"], e["artist"]))
+        if "is_playing" in e and e["is_playing"] == False:
+            print("Stopped playing")
 
 if __name__=="__main__":main()
