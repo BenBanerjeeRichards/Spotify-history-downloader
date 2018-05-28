@@ -23,6 +23,7 @@ def get_player_state(creds):
             "shuffle_state": state_from_api["shuffle_state"],
             "repeat_state": state_from_api["repeat_state"],
             "track_id": state_from_api["item"]["id"],
+            "duration_ms": state_from_api["item"]["duration_ms"]
         }
     else:
         state = {
