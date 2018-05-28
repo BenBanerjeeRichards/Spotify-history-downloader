@@ -80,8 +80,36 @@ def add_info_to_events(events):
                     track_cache[t_id] = info
 
 
+def fix_duration():
+    client = pymongo.MongoClient("localhost", 27017)
+    spotify = client.spotify
+
+
+    query = {
+        "duration_ms": {"$exists": False},
+        "track_id": {"$exists": True}
+    }
+
+    track = spotify.player.find_one(query);
+    done = 0
+
+    while track:
+        t_id = track["track_id"]
+        duration = spotify.full_tracks.find_one({"id": t_id})["duration_ms"]
+
+        res = spotify.player.update_many(
+            {"track_id": t_id},
+            {"$set": {"duration_ms": duration}
+        })
+
+        done += res.modified_count
+        print("Updated {}, cumulative total = {}".format(res.modified_count, done))
+
+        track = spotify.player.find_one(query);
 
 def main():
+    fix_duration()
+    return
     events = gen_events()
     add_info_to_events(events)
     for e in events:
