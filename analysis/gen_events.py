@@ -108,8 +108,6 @@ def fix_duration():
         track = spotify.player.find_one(query);
 
 def main():
-    fix_duration()
-    return
     events = gen_events()
     add_info_to_events(events)
     for e in events:
