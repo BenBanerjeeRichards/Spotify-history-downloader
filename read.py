@@ -186,12 +186,11 @@ def main():
         if sys.argv[1] == "recent":
             print_recent()
         if sys.argv[1] == "refresh":
-            if len(sys.argv) > 2:
-                if sys.argv[2] == "--dry-run":
-                    print("Would download {} new tracks".format(len(get_unknown_track_ids())))
-                else:
-                    n = update_full_tracks()
-                    print("downloaded {} tracks".format(n))
+            if len(sys.argv) > 2 and sys.argv[2] == "--dry-run":
+                print("Would download {} new tracks".format(len(get_unknown_track_ids())))
+            else:
+                n = update_full_tracks()
+                print("downloaded {} tracks".format(n))
     else:
         track_csv("out.csv")
 
