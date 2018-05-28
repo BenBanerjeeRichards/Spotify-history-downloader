@@ -79,6 +79,8 @@ def add_info_to_events(events):
                     event["artist"] = info["artist"]
                     track_cache[t_id] = info
 
+
+
 def main():
     events = gen_events()
     add_info_to_events(events)

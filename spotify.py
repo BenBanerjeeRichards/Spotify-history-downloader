@@ -94,6 +94,12 @@ def get_track_features(ids, creds):
     return spotify_multiple_req("https://api.spotify.com/v1/audio-features", ids, creds, extract, 100)
 
 
+def get_tracks(ids, creds):
+    def extract(j):
+        return j["tracks"]
+
+    return spotify_multiple_req("https://api.spotify.com/v1/tracks", ids, creds, extract, 50)
+
 def get_current_playback(creds):
     head = {"Authorization": "Bearer {}".format(creds.access_token)}
     res = requests.get("https://api.spotify.com/v1/me/player", headers=head)

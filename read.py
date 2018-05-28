@@ -81,6 +81,45 @@ def update_features(creds=None):
         spotify.features.insert_many(feat_data)
 
 
+# Tracks from player and tracks we don't have full track info
+# about in full_tracks
+def get_unknown_track_ids():
+    client = pymongo.MongoClient("localhost", 27017)
+    spotify = client.spotify
+
+    # Ids from player database
+    # If never played for > 30 secs then doesn't exist in tracks collection
+    player_ids = spotify.player.find().distinct("track_id")
+    track_ids = spotify.tracks.find().distinct("track.id")
+
+    # Combine and remove duplicates
+    all_ids = list(set(player_ids + track_ids))
+
+    # See what we have in db
+    full_ids = spotify.full_tracks.find().distinct("id")
+
+    return [item for item in all_ids if item not in full_ids]
+
+def update_full_tracks(creds = None):
+    if creds is None:
+        creds = get_credentials()
+
+    client = pymongo.MongoClient("localhost", 27017)
+    spotify = client.spotify
+
+    ids = get_unknown_track_ids()
+    if len(ids) > 0:
+        logging.info("[TRACK UPDATE] found {} tracks to update".format(len(ids)))
+        tracks = get_tracks(ids, creds)
+        spotify.full_tracks.insert_many(tracks)
+        logging.info("[TRACK UPDATE] done inserting tracks")
+    else:
+        logging.info("[TRACK UPDATE] no tracks to update")
+
+
+    return len(ids)
+
+
 def track_csv(out_name):
     client = pymongo.MongoClient("localhost", 27017)
     spotify = client.spotify
@@ -123,6 +162,17 @@ def track_csv(out_name):
 
             writer.writerow(data)
 
+def print_recent():
+    client = pymongo.MongoClient("localhost", 27017)
+    spotify = client.spotify
+
+    tracks = spotify.tracks.find({}, sort=[("played_at", pymongo.DESCENDING)])
+    for i, track in enumerate(tracks):
+        print("[{}]: {} - {}".format(
+            track["played_at"], track["track"]["artists"][0]["name"], track["track"]["name"]))
+        if i == 9:
+            return
+
 
 def main():
     logging.basicConfig(
@@ -134,15 +184,14 @@ def main():
 
     if len(sys.argv) > 1:
         if sys.argv[1] == "recent":
-            client = pymongo.MongoClient("localhost", 27017)
-            spotify = client.spotify
-
-            tracks = spotify.tracks.find({}, sort=[("played_at", pymongo.DESCENDING)])
-            for i, track in enumerate(tracks):
-                print("[{}]: {} - {}".format(
-                    track["played_at"], track["track"]["artists"][0]["name"], track["track"]["name"]))
-                if i == 9:
-                    return
+            print_recent()
+        if sys.argv[1] == "refresh":
+            if len(sys.argv) > 2:
+                if sys.argv[2] == "--dry-run":
+                    print("Would download {} new tracks".format(len(get_unknown_track_ids())))
+                else:
+                    n = update_full_tracks()
+                    print("downloaded {} tracks".format(n))
     else:
         track_csv("out.csv")
 
