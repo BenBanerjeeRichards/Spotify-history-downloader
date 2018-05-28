@@ -9,6 +9,8 @@ def gen_events():
     is_shuffle = None
     device = None
     is_repeat = None
+    progress = 0
+    playing_song_duration = 0
 
     states = spotify.player.find({}, sort=[("timestamp", pymongo.ASCENDING)])
     events = []
@@ -27,6 +29,12 @@ def gen_events():
                 new_event = True
                 event["track_id"] = state["track_id"]
                 track_id = state["track_id"]
+
+                # Calculate how far through previous track we were
+                if playing_song_duration > 0:
+                    event["progress_ratio"] = progress / playing_song_duration
+                playing_song_duration = state["duration_ms"]
+                progress = state["progress_ms"]
 
         if "shuffle_state" in state:
             if is_shuffle != state["shuffle_state"]:
@@ -49,6 +57,9 @@ def gen_events():
         if new_event:
             event["timestamp"] = state["timestamp"]
             events.append(event)
+
+        if "progress_ms" in state:
+            progress = state["progress_ms"] 
     return events
 
 
@@ -121,6 +132,10 @@ def main():
         if "device" in e:
             print("Started listening on device {}".format(e["device"]))
         if "track" in e:
+            # Skip?
+            if "progress_ratio" in e:
+                if e["progress_ratio"] < .95:
+                    print("Skip after {}%".format(int(e["progress_ratio"] * 100)))
             print("Started playing {} by {}".format(e["track"], e["artist"]))
         if "is_playing" in e and e["is_playing"] == False:
             print("Stopped playing")
