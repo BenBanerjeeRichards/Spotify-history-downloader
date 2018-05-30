@@ -13,7 +13,13 @@ STARTUP_WAIT_SEC = 3
 
 def process_exists():   # NB: Very slow (~1-2sec)
     for pid in psutil.pids():
-        p = psutil.Process(pid)
+        p = None
+        try:
+            p = psutil.Process(pid)
+        except psutil.NoSuchProcess:
+            # This is expected
+            # As short lived process may die before we get chance to call psutil
+            continue
         if p.name().startswith("python"):
             if len(p.cmdline()) > 1 and  p.cmdline()[1] == SCRIPT_NAME:
                 return True
