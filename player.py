@@ -4,10 +4,11 @@ import pymongo
 import logging
 from spotify import get_current_playback, get_credentials
 
-REQ_PER_SECOND = 5  # Goal number of updates of state per second
+REQ_PER_SECOND = 10  # Goal number of updates of state per second
 REFRESH_CRED_SECS = 30 * 60  # Refresh credentials every 30 minutes
 BATCH_SIZE_INSERT = 3 * 60  # Once per minute
 SLEEP_AFTER_FAILURE_BASE = 0.5
+LOG_AFTER = 10
 
 def get_player_state(creds):
     start = time.time()
@@ -57,8 +58,12 @@ def run():
     # Used for logging purposes
     batch_start_time = time.time()
 
+    log_count = 0
+
     while True:
         batch_count += 1
+        log_count += 1
+        
         current_time = time.time()
         if current_time - last_credential_time > REFRESH_CRED_SECS:
             # REFRESH
@@ -85,10 +90,11 @@ def run():
             batch_count = 0
             states = []
 
-        if batch_count % 10 == 0:
+        if log_count == LOG_AFTER:
+            log_count = 0
             end_b = time.time()
             dt = end_b - batch_start_time
-            rate = 10 / dt
+            rate = LOG_AFTER / dt
             logging.debug("[STATUS] start={}, end={}s, dt = {}, sleep_time={}, avg_request_time={}, rate={}"
                 .format(batch_start_time, end_b, dt, delay_ms, avg_time, rate))
             batch_start_time = end_b
