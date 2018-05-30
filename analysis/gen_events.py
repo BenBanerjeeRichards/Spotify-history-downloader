@@ -1,4 +1,9 @@
 import pymongo
+import datetime
+
+# If we move onto next song 100 * SKIP_THRESH % way through
+# then don't consider it a skip
+SKIP_THRESH = 0.95
 
 def gen_events():
     client = pymongo.MongoClient("localhost", 27017)
@@ -119,7 +124,14 @@ def fix_duration():
 def main():
     events = gen_events()
     add_info_to_events(events)
+
     for e in events:
+        ts = datetime.datetime.fromtimestamp(
+            int(e["timestamp"]) / 1000
+         ).strftime('%Y-%m-%d %H:%M:%S')
+
+        print("[{}]".format(ts), end="")
+
         if "repeat" in e:
             print("Repeat {}".format(e["repeat"]))
         if "is_shuffle" in e:
@@ -134,7 +146,7 @@ def main():
         if "track" in e:
             # Skip?
             if "progress_ratio" in e:
-                if e["progress_ratio"] < .95:
+                if e["progress_ratio"] < SKIP_THRESH:
                     print("Skip after {}%".format(int(e["progress_ratio"] * 100)))
             print("Started playing {} by {}".format(e["track"], e["artist"]))
         if "is_playing" in e and e["is_playing"] == False:
