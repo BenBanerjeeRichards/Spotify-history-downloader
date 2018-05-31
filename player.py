@@ -11,20 +11,23 @@ SLEEP_AFTER_FAILURE_BASE = 0.5
 LOG_AFTER = 10
 
 def get_player_state(creds):
-    start = time.time()
+    start = time.time() * 1000
     state_from_api = get_current_playback(creds)
-    end = time.time()
+    end = time.time() * 1000
 
     if state_from_api is not None:
         state = {
-            "timestamp": state_from_api["timestamp"],
+            "api_timestamp": state_from_api["timestamp"],
             "device": state_from_api["device"],
             "progress_ms": state_from_api["progress_ms"],
             "is_playing": state_from_api["is_playing"],
             "shuffle_state": state_from_api["shuffle_state"],
             "repeat_state": state_from_api["repeat_state"],
             "track_id": state_from_api["item"]["id"],
-            "duration_ms": state_from_api["item"]["duration_ms"]
+            "duration_ms": state_from_api["item"]["duration_ms"],
+            # estimate **actual** timestamp**
+            # See https://github.com/spotify/web-api/issues/640 (possibily caching due to high request rate)
+            "timestamp": (start + end) / 2.0,  
         }
     else:
         state = {
