@@ -270,34 +270,10 @@ def main():
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S', filename='gen_events.log')
     logging.getLogger().addHandler(logging.StreamHandler())
-    events = gen_events()
-    add_info_to_events(events)
     client = pymongo.MongoClient("localhost", 27017)
     spotify = client.spotify
 
     states = spotify.player.find({"timestamp": {"$gt": 1527794070000}})
-
-    ts_at_start = None
-    prev_progress = None
-    prev_timestamp = None
-    for i, state in enumerate(states):
-        if not state["is_playing"]:
-            continue
-
-        if ts_at_start is None:
-            ts_at_start = state["timestamp"] - state["progress_ms"]
-
-        if prev_progress is not None:
-            diff_progress = state["progress_ms"] - prev_progress
-            diff_time = state["timestamp"] - prev_timestamp
-            diff = diff_progress - diff_time
-            if diff > 500 or diff < -500:
-                print(diff)
-
-        prev_progress = state["progress_ms"]
-        prev_timestamp = state["timestamp"]
-
-    return 
 
     if len(sys.argv) <= 1:
         print("Provide action")
