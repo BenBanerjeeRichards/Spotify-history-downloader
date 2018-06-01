@@ -24,7 +24,7 @@ def gen_events():
     is_shuffle = None
     device = None
     is_repeat = None
-    progress = 0
+    prev_progress = 0
     playing_song_duration = 0
 
     states = spotify.player.find({}, sort=[("timestamp", pymongo.ASCENDING)])
@@ -35,46 +35,70 @@ def gen_events():
         new_event = False
 
         if is_playing != state["is_playing"]:
-            new_event = True
-            event["is_playing"] =  state["is_playing"]
             is_playing = state["is_playing"]
+            action_name = "play" if  state["is_playing"] else "pause"
+            events.append({
+                "action": action_name,
+                "state": state,
+                "timestamp": state["timestamp"]
+            })
 
         if "track_id" in state:
             if track_id != state["track_id"]:
-                new_event = True
-                event["track_id"] = state["track_id"]
                 track_id = state["track_id"]
 
                 # Calculate how far through previous track we were
+                prog_ratio = 1
                 if playing_song_duration > 0:
-                    event["progress_ratio"] = progress / playing_song_duration
+                    prog_ratio = prev_progress / playing_song_duration
+
+                action_name = "change_track"
+                if prog_ratio < SKIP_THRESH:
+                    action_name = "skip_track"
+
+                events.append({
+                    "action": action_name,
+                    "prev_progress": prog_ratio,
+                    "state": state,
+                    "timestamp": state["timestamp"]
+                })
+
+
                 playing_song_duration = state["duration_ms"]
-                progress = state["progress_ms"]
+                prev_progress = state["progress_ms"]
 
         if "shuffle_state" in state:
             if is_shuffle != state["shuffle_state"]:
-                new_event = True
-                event["is_shuffle"] = state["shuffle_state"]
                 is_shuffle = state["shuffle_state"]
+                action_name = "shuffle_{}".format(is_shuffle)
+                events.append({
+                    "action": action_name,
+                    "state": state,
+                    "timestamp": state["timestamp"]
+                })
 
         if "repeat_state" in state:
             if is_repeat != state["repeat_state"]:
-                new_event = True
-                event["repeat"] = state["repeat_state"]
                 is_repeat = state["repeat_state"]
+                action_name = "repeat_on" if is_repeat else "repeat_off"
+                events.append({
+                    "action": action_name,
+                    "state": state,
+                    "timestamp": state["timestamp"]
+                })
 
         if "device" in state:
             if device != state["device"]["name"]:
-                new_event = True
-                event["device"] = state["device"]["name"]
                 device = state["device"]["name"]
-
-        if new_event:
-            event["timestamp"] = state["timestamp"]
-            events.append(event)
+                events.append({
+                    "action": "connect_device",
+                    "state": state,
+                    "timestamp": state["timestamp"]
+                })
 
         if "progress_ms" in state:
-            progress = state["progress_ms"] 
+            prev_progress = state["progress_ms"] 
+
     return events
 
 
@@ -84,24 +108,25 @@ def add_info_to_events(events):
     track_cache = {}
 
     for event in events:
-        if "track_id" in event:
-            t_id = event["track_id"]
+        if "track_id" not in event["state"]:
+            continue
+        t_id = event["state"]["track_id"]
 
-            if t_id in track_cache:
-                event["track"] = track_cache[t_id]["track"]
-                event["artist"] = track_cache[t_id]["artist"]
+        if t_id in track_cache:
+            event["track"] = track_cache[t_id]["track"]
+            event["artist"] = track_cache[t_id]["artist"]
+        else:
+            track_info = spotify.full_tracks.find_one({"id": t_id})
+            if track_info is None:
+                print("Failed to get track info for track {}".format(t_id))
             else:
-                track_info = spotify.full_tracks.find_one({"id": t_id})
-                if track_info is None:
-                    print("Failed to get track info for track {}".format(t_id))
-                else:
-                    info = {
-                        "track": track_info["name"],
-                        "artist": track_info["artists"][0]["name"]
-                    }
-                    event["track"] = info["track"]
-                    event["artist"] = info["artist"]
-                    track_cache[t_id] = info
+                info = {
+                    "track": track_info["name"],
+                    "artist": track_info["artists"][0]["name"]
+                }
+                event["track"] = info["track"]
+                event["artist"] = info["artist"]
+                track_cache[t_id] = info
 
 
 def fix_duration():
@@ -232,26 +257,12 @@ def print_events(events):
     for e in events:
         ts = unix_to_iso(e["timestamp"])
         print("[{}]".format(ts), end="")
-
-        if "repeat" in e:
-            print("Repeat {}".format(e["repeat"]))
-        if "is_shuffle" in e:
-            if e["is_shuffle"]:
-                print("Shuffle on")
-            else:
-                print("Shuffle off")
-        if "is_playing" in e and e["is_playing"] == True:
-            print("Play")
-        if "device" in e:
-            print("Started listening on device {}".format(e["device"]))
-        if "track" in e:
-            # Skip?
-            if "progress_ratio" in e:
-                if e["progress_ratio"] < SKIP_THRESH:
-                    print("Skip after {}%".format(int(e["progress_ratio"] * 100)))
-            print("Started playing {} by {}".format(e["track"], e["artist"]))
-        if "is_playing" in e and e["is_playing"] == False:
-            print("Stopped playing")
+        print(" {}".format(e["action"]), end="")
+        if e["action"] == "play" or e["action"] == "change_track":
+            print(" {} by {}".format(e["track"], e["artist"]), end="")
+        if e["action"] == "skip":      
+            print(" to {} by {} after {}%".format(e["track"], e["artist"], int(100 * e["prev_progress"])), end="")
+        print()
 
 def main():
     logging.basicConfig(
@@ -259,6 +270,34 @@ def main():
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S', filename='gen_events.log')
     logging.getLogger().addHandler(logging.StreamHandler())
+    events = gen_events()
+    add_info_to_events(events)
+    client = pymongo.MongoClient("localhost", 27017)
+    spotify = client.spotify
+
+    states = spotify.player.find({"timestamp": {"$gt": 1527794070000}})
+
+    ts_at_start = None
+    prev_progress = None
+    prev_timestamp = None
+    for i, state in enumerate(states):
+        if not state["is_playing"]:
+            continue
+
+        if ts_at_start is None:
+            ts_at_start = state["timestamp"] - state["progress_ms"]
+
+        if prev_progress is not None:
+            diff_progress = state["progress_ms"] - prev_progress
+            diff_time = state["timestamp"] - prev_timestamp
+            diff = diff_progress - diff_time
+            if diff > 500 or diff < -500:
+                print(diff)
+
+        prev_progress = state["progress_ms"]
+        prev_timestamp = state["timestamp"]
+
+    return 
 
     if len(sys.argv) <= 1:
         print("Provide action")
