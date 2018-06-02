@@ -4,3 +4,4 @@ Spotify Recently Played.iml
 out.csv
 *.log
 download
+import.json
