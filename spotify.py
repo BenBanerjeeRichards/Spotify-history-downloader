@@ -87,6 +87,11 @@ def get_artists(ids, creds):
     return spotify_multiple_req("https://api.spotify.com/v1/artists", ids, creds, extract)
 
 
+def search(query, type, type_key, creds):
+    head = {"Authorization": "Bearer {}".format(creds.access_token)}
+    res = requests.get("https://api.spotify.com/v1/search", params={"q": query, "type": type}, headers=head)
+    return res.json()[type_key]["items"]
+
 def get_track_features(ids, creds):
     def extract(j):
         return j["audio_features"]
