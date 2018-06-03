@@ -3,6 +3,7 @@ import csv
 import pymongo
 from spotify import *
 import sys
+import json
 
 def basic():
     client = pymongo.MongoClient("localhost", 27017)
@@ -77,6 +78,11 @@ def update_features(creds=None):
 
     logging.info("Found {} features ids to download".format(len(ids_to_get)))
     feat_data = get_track_features(ids_to_get, creds)
+    def notNone(x):
+        return x is not None
+
+    feat_data = list(filter(notNone, feat_data))
+
     if len(feat_data) > 0:
         spotify.features.insert_many(feat_data)
 
@@ -132,10 +138,29 @@ def track_csv(out_name):
         writer = csv.writer(f)
         writer.writerow(header)
 
+        empty_feat = {}
+        empty_feat["danceability"] = ""
+        empty_feat["energy"] = ""
+        empty_feat["key"] = ""
+        empty_feat["loudness"] = ""
+        empty_feat["mode"] = ""
+        empty_feat["speechiness"] = ""
+        empty_feat["acousticness"] = ""
+        empty_feat["instrumentalness"] = ""
+        empty_feat["liveness"] = ""
+        empty_feat["valence"] = ""
+        empty_feat["tempo"] = ""
+        empty_feat["time_signature"] = ""
+
+
         for track in tracks:
             # Get artist data
             artist = spotify.artists.find_one({"id": track["track"]["artists"][0]["id"]})
             feat = spotify.features.find_one({"id": track["track"]["id"]})
+            if feat is None:
+                logging.info("NO FEATURE FOR {}".format(track["track"]["id"]))
+                feat = empty_feat
+                
             data = [
                 track["played_at"],
                 track["track"]["id"],
@@ -179,8 +204,11 @@ def main():
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S', filename='output.log')
+    logging.getLogger().addHandler(logging.StreamHandler())
 
     update_features()
+    update_artists()
+    update_albums()
 
     if len(sys.argv) > 1:
         if sys.argv[1] == "recent":
