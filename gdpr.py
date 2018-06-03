@@ -1,7 +1,7 @@
 import pymongo
 import datetime
 import json 
-from spotify import Credentials, get_credentials, search
+from spotify import Credentials, get_credentials, search, get_tracks
 import sys
 import pickle
 
@@ -64,7 +64,46 @@ def json_serial(obj):
         return obj.isoformat()
     raise TypeError ("Type %s not serializable" % type(obj))
 
-def main():
+
+def load(path):
+    client = pymongo.MongoClient("localhost", 27017)
+    spotify = client.spotify
+    ids = []
+    data = None
+
+    with open(path) as f:
+        data = json.loads(f.read())
+        ids = []
+        creds = get_credentials()
+
+        for track in data:
+            if not "trackId" in track:
+                continue
+
+            ids.append(track["trackId"])
+
+        ids = list(set(ids))
+
+    full_tracks = get_tracks(ids, creds)
+    track_by_id = {}
+    for f_track in full_tracks:
+        track_by_id[f_track["id"]] = f_track
+    print("GOT {} tracks".format(len(full_tracks)))
+
+    states = []
+    for track in data:
+        if "trackId" not in track:
+            continue
+        state = {
+            "played_at": track["time"],
+            "track": track_by_id[track["trackId"]]
+        }
+
+        states.append(state)
+
+    spotify.tracks.insert_many(states)
+
+def add_track_ids():
     data = remove_recent(parse_file(EXPORT_PATH))
     data = remove_short_plays(data)
 
@@ -75,8 +114,6 @@ def main():
     failures = []
 
     cache = {}
-
-    
     for i, item in enumerate(data):
         main_artist = item["artistName"].split(",")[0]
         cache_key = "{}:{}".format(item["trackName"], item["artistName"])
@@ -99,4 +136,9 @@ def main():
 
     with open("import.json", "w+", encoding="utf-8") as f:
         f.write(json.dumps(data, default=json_serial))
+
+
+def main():
+    load("import.json")
+    
 if __name__=="__main__":main()
