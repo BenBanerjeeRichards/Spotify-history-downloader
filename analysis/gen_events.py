@@ -8,6 +8,8 @@ import logging
 SKIP_THRESH = 0.95
 CLEAN_BATCH_SIZE = 1000
 INACTIVE_TIME_THRESH_MS = 1000  # If more than 1s apart create separate events
+SEEK_UPPER_LIMIT_MS = 1500
+SEEK_LOWER_LIMIT_MS = -1 * SEEK_UPPER_LIMIT_MS
 
 def unix_to_iso(timestamp_ms):
     return datetime.datetime.fromtimestamp(
@@ -27,6 +29,12 @@ def gen_events():
     prev_progress = 0
     playing_song_duration = 0
 
+    # Seek tracking
+    ts_at_start = None
+    prev_progress = None
+    prev_timestamp = None
+
+
     states = spotify.player.find({}, sort=[("timestamp", pymongo.ASCENDING)])
     events = []
 
@@ -45,7 +53,6 @@ def gen_events():
 
         if "track_id" in state:
             if track_id != state["track_id"]:
-                track_id = state["track_id"]
 
                 # Calculate how far through previous track we were
                 prog_ratio = 1
@@ -60,8 +67,12 @@ def gen_events():
                     "action": action_name,
                     "prev_progress": prog_ratio,
                     "state": state,
+                    "prev_track_id": track_id,
                     "timestamp": state["timestamp"]
                 })
+
+                track_id = state["track_id"]
+
 
 
                 playing_song_duration = state["duration_ms"]
@@ -96,8 +107,26 @@ def gen_events():
                     "timestamp": state["timestamp"]
                 })
 
+
+        # We can now generate accurate seek events
+        if "api_timestamp" in state and state["is_playing"]:
+            if prev_progress is not None:
+                diff_progress = state["progress_ms"] - prev_progress
+                diff_time = state["timestamp"] - prev_timestamp
+                diff = diff_progress - diff_time
+                if diff > SEEK_UPPER_LIMIT_MS or diff < SEEK_LOWER_LIMIT_MS:
+                    events.append({
+                        "action": "seek",
+                        "prev_progress": prev_progress / playing_song_duration,
+                        "current_progress": state["progress_ms"] / playing_song_duration,
+                        "diff_amount_ms": diff,
+                        "state": state,
+                        "timestamp": state["timestamp"]
+                    })
         if "progress_ms" in state:
             prev_progress = state["progress_ms"] 
+
+        prev_timestamp = state["timestamp"]
 
     return events
 
@@ -262,6 +291,11 @@ def print_events(events):
             print(" {} by {}".format(e["track"], e["artist"]), end="")
         if e["action"] == "skip":      
             print(" to {} by {} after {}%".format(e["track"], e["artist"], int(100 * e["prev_progress"])), end="")
+        if e["action"] == "seek":
+            print(" track {} by {} from {}% to {}% diff={}"
+                .format(e["track"], e["artist"], int(100 * e["prev_progress"]), int(100 * e["current_progress"]), e["diff_amount_ms"]), end="")
+        if e["action"] == "skip_track":
+            print(" after {}%".format(int(100 * e["prev_progress"])), end="")
         print()
 
 def main():
