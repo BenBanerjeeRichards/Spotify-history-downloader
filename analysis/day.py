@@ -2,6 +2,7 @@ import pymongo
 import datetime
 import pytz
 from FreqDict import FreqDict
+import json
 
 def get_tracks(date, timezone = None):
     if timezone is None:
@@ -60,14 +61,23 @@ def limit_top_tracks(tracks, limit = 5):
 
     return top_tracks
 
+def time_distribution(tracks):
+    freq = FreqDict()
+    for track in tracks:
+        freq.add(track["played_at"].hour)
+
+    return freq.d
+
 def get_stats(date, timezone = None):
     tracks = list(map(lambda x: simple(x), get_tracks(date, timezone)))
     top_tracks = limit_top_tracks(track_frequency(tracks))
     return {
         "count": len(tracks),
-        "top_tracks": top_tracks
+        "top_tracks": top_tracks,
+        "time_dist": time_distribution(tracks)
     }
 def main():
-    stats = get_stats(datetime.datetime.now())
+    stats = get_stats(datetime.datetime(2018, 6, 8))
     print(stats)
+    print(json.dumps(stats))
 if __name__ == "__main__":main()
