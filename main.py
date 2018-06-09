@@ -16,15 +16,16 @@ def insert(tracks):
     # Get last track listened to stored in db
     # This is to ensure we don't duplicate items in database
     latest_track = spotify.tracks.find_one({},sort=[("played_at", pymongo.DESCENDING)])
+    
+    # Properly parse dates 
+    for track in tracks:
+        track["played_at"] = dateutil.parser.parse(track["played_at"])
+
     if latest_track:
         tracks = remove_tracks_before_inc(tracks, latest_track)
         logging.info("Got {} tracks to insert".format(len(tracks)))
     else:
         logging.info("Nothing played since last download, doing nothing...")
-
-    # Properly parse dates 
-    for track in tracks:
-        track["played_at"] = dateutil.parser.parse(track["played_at"])
 
     if len(tracks) > 0:
         spotify.tracks.insert_many(tracks)

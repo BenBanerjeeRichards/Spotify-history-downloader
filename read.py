@@ -24,10 +24,10 @@ def update_albums(creds=None):
     spotify = client.spotify
 
     tracks = spotify.tracks.find({})
+    album_ids = spotify.albums.distinct("id")
     for track in tracks:
         a_id = track["track"]["album"]["id"]
-        album = spotify.albums.find_one({"id": a_id})
-        if not album:
+        if a_id not in album_ids:
             ids_to_get.append(a_id)
 
     logging.info("Found {} album ids to download".format(len(ids_to_get)))
@@ -46,13 +46,14 @@ def update_artists(creds=None):
     spotify = client.spotify
 
     tracks = spotify.tracks.find({})
+    artist_ids = spotify.artists.distinct("id")
+
     for track in tracks:
         # Remember we adopt convention of not caring about second, third.. artists
         if len(track["track"]["artists"]) == 0:
             continue
         a_id = track["track"]["artists"][0]["id"]
-        artist = spotify.artists.find_one({"id": a_id})
-        if not artist:
+        if a_id not in artist_ids:
             ids_to_get.append(a_id)
 
     logging.info("Found {} artist ids to download".format(len(ids_to_get)))
@@ -70,10 +71,10 @@ def update_features(creds=None):
     spotify = client.spotify
 
     tracks = spotify.tracks.find({})
+    feature_ids = spotify.features.distinct("id")
     for track in tracks:
         track_id = track["track"]["id"]
-        feature = spotify.features.find_one({"id": track_id})
-        if not feature:
+        if track_id not in feature_ids:
             ids_to_get.append(track_id)
 
     logging.info("Found {} features ids to download".format(len(ids_to_get)))
@@ -206,9 +207,18 @@ def main():
         datefmt='%Y-%m-%d %H:%M:%S', filename='output.log')
     logging.getLogger().addHandler(logging.StreamHandler())
 
-    update_features()
-    update_artists()
-    update_albums()
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+    creds = get_credentials()
+    logging.info("Updating features...")
+    update_features(creds)
+
+    logging.info("Updating atists...")
+    update_artists(creds)
+
+    logging.info("Updating albums...")
+    update_albums(creds)
 
     if len(sys.argv) > 1:
         if sys.argv[1] == "recent":
