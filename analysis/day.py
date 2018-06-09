@@ -66,8 +66,15 @@ def time_distribution(tracks):
     for track in tracks:
         freq.add(track["played_at"].hour)
 
-    return freq.d
+    d =  freq.d
+    arr = []
+    for i in range(0, 24):
+        if i in d:
+            arr.append(d[i])
+        else:
+            arr.append(0)
 
+    return arr
 def get_stats(date, timezone = None):
     tracks = list(map(lambda x: simple(x), get_tracks(date, timezone)))
     top_tracks = limit_top_tracks(track_frequency(tracks))
