@@ -2,6 +2,8 @@ import pymongo
 import read
 import time
 from spotify import *
+import dateutil.parser
+
 class DownloadException(Exception):
     pass
     
@@ -19,6 +21,11 @@ def insert(tracks):
         logging.info("Got {} tracks to insert".format(len(tracks)))
     else:
         logging.info("Nothing played since last download, doing nothing...")
+
+    # Properly parse dates 
+    for track in tracks:
+        track["played_at"] = dateutil.parser.parse(track["played_at"])
+
     if len(tracks) > 0:
         spotify.tracks.insert_many(tracks)
     client.close()  # TODO can we use with..as clause?
