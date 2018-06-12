@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spotify today</title>
+    <script src="day.js"></script>
+    <link rel="stylesheet" href="day.css">
+
+    <!-- DEV -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+    <script src="Chart.bundle.js"></script>
+
+</head>
+<body>
+    <div id="top">
+        <ol id="top-tracks">
+            <li v-for="track in top_tracks">
+                <span class="top-name"> {{track.name}} </span>
+                <span id="top-sep"></span>
+                <span class="top-artist"> {{track.artist}} </span>
+            </li>
+        </ol>
+        <div id="num-plays">
+            <span id="num-num">{{count}}</span> <span id="num-text">plays</span>
+        </div>
+    </div>
+    <canvas id="timeGraph" width="400" height="400"></canvas>
+
+</body>
+</html>

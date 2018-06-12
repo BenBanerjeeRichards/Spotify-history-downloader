@@ -3,6 +3,8 @@ import datetime
 import pytz
 from FreqDict import FreqDict
 import json
+from bottle import route, run, template
+import sys
 
 def get_tracks(date, timezone = None):
     if timezone is None:
@@ -75,6 +77,7 @@ def time_distribution(tracks):
             arr.append(0)
 
     return arr
+
 def get_stats(date, timezone = None):
     tracks = list(map(lambda x: simple(x), get_tracks(date, timezone)))
     top_tracks = limit_top_tracks(track_frequency(tracks))
@@ -83,8 +86,25 @@ def get_stats(date, timezone = None):
         "top_tracks": top_tracks,
         "time_dist": time_distribution(tracks)
     }
+
+@route("/spotify")
+def spotify():
+    return get_stats(datetime.datetime.now())
+
+@route("/spotify/<year>/<month>/<day>")
+def spotify(year, month, day):
+    return get_stats(datetime.datetime(int(year), int(month), int(day)))
+
 def main():
-    stats = get_stats(datetime.datetime(2018, 6, 8))
-    print(stats)
-    print(json.dumps(stats))
+    if len(sys.argv) != 2:
+        print("Pass either DEV or PROD")
+        return
+
+    if sys.argv[1] == "DEV":
+        run(host="localhost", port=80)
+    elif sys.argv[1] == "PROD":
+        run(host="206.189.24.92", port=80)
+    else:
+        print("Provide PROD or DEV")
+
 if __name__ == "__main__":main()

@@ -1,0 +1,54 @@
+body {
+    font-family: helvetica;
+    margin-top: 1%;
+}
+
+.top-name {
+    font-size: 30px;
+    color: #191414;
+    font-weight: bold;
+}
+
+.top-artist {
+    font-size: 22px;
+    color: #444;
+}
+
+.top-sep {
+    padding-right: 20px;
+    font-size: 100px;
+}
+
+#top-tracks {
+    width: 50%;
+    float:left; /* add this */
+}
+
+#num-plays {
+    overflow: hidden; 
+    padding-top: 3%;
+}
+
+#num-plays {
+    text-align: center;
+}
+
+#num-num {
+    font-size: 50px;
+    font-weight: bold;
+    color: 191414;
+}
+
+#num-text {
+
+}
+
+canvas {
+    height: 350px !important;
+    width: 90% !important;
+}
+
+#top {
+    width: 100%;
+    overflow: hidden; 
+}
