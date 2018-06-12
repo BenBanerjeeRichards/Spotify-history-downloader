@@ -103,7 +103,7 @@ def main():
     if sys.argv[1] == "DEV":
         run(host="localhost", port=80)
     elif sys.argv[1] == "PROD":
-        run(host="206.189.24.92", port=80)
+        run(host="206.189.24.92", port=9876)
     else:
         print("Provide PROD or DEV")
 
