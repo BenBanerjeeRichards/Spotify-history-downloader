@@ -3,7 +3,7 @@ import datetime
 import pytz
 from FreqDict import FreqDict
 import json
-from bottle import route, run, template
+from bottle import Bottle, request, response, run, hook, route
 import sys
 
 def get_tracks(date, timezone = None):
@@ -94,6 +94,16 @@ def spotify():
 @route("/spotify/<year>/<month>/<day>")
 def spotify(year, month, day):
     return get_stats(datetime.datetime(int(year), int(month), int(day)))
+
+@hook('after_request')
+def enable_cors():
+    """
+    You need to add some headers to each request.
+    Don't use the wildcard '*' for Access-Control-Allow-Origin in production.
+    """
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'PUT, GET, POST, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
 
 def main():
     if len(sys.argv) != 2:
