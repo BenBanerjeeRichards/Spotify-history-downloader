@@ -1,16 +1,27 @@
-DATA = {"top_tracks": [{"artist": "Elohim", "name": "Panic Attacks (feat. Yoshi Flower)", "plays": 3}, {"artist": "Kevin Abstract", "name": "Empty", "plays": 3}, {"artist": "StayLoose", "name": "Been So Long", "plays": 3}, {"artist": "Peach Pit", "name": "Techno Show", "plays": 2}, {"artist": "Billie Eilish", "name": "bellyache", "plays": 2}], "count": 91, "time_dist": [0, 0, 0, 0, 0, 0, 0, 0, 6, 14, 11, 2, 3, 17, 18, 11, 0, 0, 5, 0, 0, 0, 4, 0]}
+DATA = {"top_tracks": [], "count": 0}
 
 window.onload = function() {
     var app = new Vue({
         el: '#top-tracks',
-        data: DATA
+        data: DATA,
     })
 
     var n_plays = new Vue({
         el: "#num-plays",
-        data: DATA
+        data: DATA,
     })
 
+    // Simple request, just use old school ajax
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            DATA = JSON.parse(this.responseText);
+            console.log(DATA)
+            Vue.set(app.data, "top_tracks", DATA["top_tracks"])
+        }
+    };
+    xhttp.open("GET", "http://206.189.24.92:9876/spotify", true);
+    xhttp.send();
 
     var ctx = document.getElementById("timeGraph").getContext('2d');
     var myChart = new Chart(ctx, {
