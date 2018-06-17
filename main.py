@@ -2,7 +2,7 @@ import pymongo
 import read
 from spotify import *
 import dateutil.parser
-
+import util
 
 class DownloadException(Exception):
     pass
@@ -35,7 +35,10 @@ def insert(tracks):
 def remove_tracks_before_inc(tracks, stop_at_track):
     new = []
     for track in tracks:
-        if track["played_at"] == stop_at_track["played_at"]:
+        print(track["played_at"])
+        print(stop_at_track["played_at"])
+
+        if util.datetimes_equal(track["played_at"], stop_at_track["played_at"]):
             logging.info("Found repeat track, stopping: {}".format(track["played_at"]))
 
             break
@@ -43,7 +46,6 @@ def remove_tracks_before_inc(tracks, stop_at_track):
 
     logging.info("Found all new tracks. Initial = {}, New = {}, Filterd = {}"
         .format(len(tracks), len(new), len(tracks) - len(new)))
-
 
     return new
 
