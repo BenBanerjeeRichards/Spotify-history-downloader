@@ -1,29 +1,29 @@
 import pymongo
 import read
-import time
 from spotify import *
 import dateutil.parser
 
+
 class DownloadException(Exception):
     pass
-    
-def insert(tracks):
-    logging.info("Retrieved 50 songs from spotify")
 
-    client = pymongo.MongoClient("localhost", 27017)    # Same in prod
+
+def insert(tracks):
+    client = pymongo.MongoClient("localhost", 27017)  # Same in prod
     spotify = client.spotify
 
     # Get last track listened to stored in db
     # This is to ensure we don't duplicate items in database
-    latest_track = spotify.tracks.find_one({},sort=[("played_at", pymongo.DESCENDING)])
-    
-    # Properly parse dates 
+    latest_track = spotify.tracks.find_one({}, sort=[("played_at", pymongo.DESCENDING)])
+    logging.info("Retrieved tracks from spotify, filtering out ones played up to {}".format(latest_track["played_at"]))
+
+    # Properly parse dates
     for track in tracks:
         track["played_at"] = dateutil.parser.parse(track["played_at"])
 
     if latest_track:
         tracks = remove_tracks_before_inc(tracks, latest_track)
-        logging.info("Got {} tracks to insert".format(len(tracks)))
+        logging.info("Inserting {} tracks".format(len(tracks)))
     else:
         logging.info("Nothing played since last download, doing nothing...")
 
@@ -31,14 +31,22 @@ def insert(tracks):
         spotify.tracks.insert_many(tracks)
     client.close()  # TODO can we use with..as clause?
 
+
 def remove_tracks_before_inc(tracks, stop_at_track):
     new = []
     for track in tracks:
         if track["played_at"] == stop_at_track["played_at"]:
+            logging.info("Found repeat track, stopping: {}".format(track["played_at"]))
+
             break
         new.append(track)
 
+    logging.info("Found all new tracks. Initial = {}, New = {}, Filterd = {}"
+        .format(len(tracks), len(new), len(tracks) - len(new)))
+
+
     return new
+
 
 def pretty_recently_played_json(tracks):
     s = ""
@@ -46,11 +54,13 @@ def pretty_recently_played_json(tracks):
         s += "{} - {}\n".format(item["track"]["artists"][0]["name"], item["track"]["name"])
     return s
 
+
 def main():
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S', filename='output.log')
+    logging.getLogger().addHandler(logging.StreamHandler())
 
     # Disable logging we don't need
     # O/W we end up with GBs of logs in just 24 hours
@@ -67,4 +77,5 @@ def main():
     read.update_artists()
     read.update_features()
 
-if __name__ == "__main__":main()
+
+if __name__ == "__main__": main()
