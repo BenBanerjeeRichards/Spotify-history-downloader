@@ -260,7 +260,7 @@ def refresh_events(spotify):
     else:
         logging.info("Processing all events (no existing events)")
         states = spotify.player.find(sort=[("timestamp", pymongo.ASCENDING)])
-        initial_state = {}
+        initial_state = {"state": {}}
 
     logging.info("Initial state for event gen: {}".format(initial_state.__str__()))
     logging.info("Num states to process = {}".format(states.count()))
