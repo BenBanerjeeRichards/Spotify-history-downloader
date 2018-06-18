@@ -3,6 +3,7 @@ import read
 from spotify import *
 import dateutil.parser
 import util
+import analysis.gen_events
 
 class DownloadException(Exception):
     pass
@@ -71,6 +72,9 @@ def main():
 
     # Update stuff
     read.update()
+
+    # Update events
+    analysis.gen_events.refresh_events(util.get_spotify_db())
 
 
 if __name__ == "__main__": main()

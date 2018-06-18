@@ -11,40 +11,40 @@ INACTIVE_TIME_THRESH_MS = 1000  # If more than 1s apart create separate events
 SEEK_UPPER_LIMIT_MS = 1500
 SEEK_LOWER_LIMIT_MS = -1 * SEEK_UPPER_LIMIT_MS
 
+
 def unix_to_iso(timestamp_ms):
     return datetime.datetime.fromtimestamp(
         timestamp_ms / 1000
-     ).strftime('%Y-%m-%d %H:%M:%S')
+    ).strftime('%Y-%m-%d %H:%M:%S')
 
 
 def gen_events(initial_state, states):
-    is_playing = initial_state["is_playing"]
-    track_id = initial_state["track_id"]
-    is_shuffle = initial_state["shuffle_state"]
-    device = initial_state["device"]["name"]
-    is_repeat = initial_state["repeat_state"]
+    state = initial_state["state"]
+    is_playing = None if "is_playing" not in state else state["is_playing"]
+    track_id = None if "track_id" not in state else state["track_id"]
+    is_shuffle = None if "shuffle_state" not in state else state["shuffle_state"]
+    device = None if "device" not in state else state["device"]["name"]
+    is_repeat = None if "repeat_state" not in state else state["repeat_state"]
     playing_song_duration = 0
 
-    # Seek tracking
-    ts_at_start = None
-    prev_progress = initial_state["prev_progress"]
-    prev_timestamp = initial_state["prev_timestamp"]
+    prev_progress = 0 if "prev_progress" not in initial_state else initial_state["prev_progress"]
+    prev_timestamp = 0 if "prev_timestamp" not in initial_state else initial_state["prev_timestamp"]
 
     events = []
 
     for state in states:
-        event = {}
-        new_event = False
-
         if is_playing != state["is_playing"]:
             is_playing = state["is_playing"]
-            action_name = "play" if  state["is_playing"] else "pause"
+            action_name = "play" if state["is_playing"] else "pause"
             events.append({
                 "action": action_name,
                 "state": state,
-                "timestamp": state["timestamp"]
+                "timestamp": state["timestamp"],
+                "prev_progress": prev_progress,
+                "prev_timestamp": prev_timestamp
             })
 
+        # If track_id in event then some song is loaded on the player
         if "track_id" in state:
             if track_id != state["track_id"]:
 
@@ -62,12 +62,11 @@ def gen_events(initial_state, states):
                     "prev_progress": prog_ratio,
                     "state": state,
                     "prev_track_id": track_id,
-                    "timestamp": state["timestamp"]
+                    "timestamp": state["timestamp"],
+                    "prev_timestamp": prev_timestamp
                 })
 
                 track_id = state["track_id"]
-
-
 
                 playing_song_duration = state["duration_ms"]
                 prev_progress = state["progress_ms"]
@@ -79,7 +78,9 @@ def gen_events(initial_state, states):
                 events.append({
                     "action": action_name,
                     "state": state,
-                    "timestamp": state["timestamp"]
+                    "timestamp": state["timestamp"],
+                    "prev_progress": prev_progress,
+                    "prev_timestamp": prev_timestamp
                 })
 
         if "repeat_state" in state:
@@ -89,7 +90,9 @@ def gen_events(initial_state, states):
                 events.append({
                     "action": action_name,
                     "state": state,
-                    "timestamp": state["timestamp"]
+                    "timestamp": state["timestamp"],
+                    "prev_progress": prev_progress,
+                    "prev_timestamp": prev_timestamp
                 })
 
         if "device" in state:
@@ -98,9 +101,10 @@ def gen_events(initial_state, states):
                 events.append({
                     "action": "connect_device",
                     "state": state,
-                    "timestamp": state["timestamp"]
+                    "timestamp": state["timestamp"],
+                    "prev_progress": prev_progress,
+                    "prev_timestamp": prev_timestamp
                 })
-
 
         # We can now generate accurate seek events
         if "api_timestamp" in state and state["is_playing"]:
@@ -115,14 +119,16 @@ def gen_events(initial_state, states):
                         "current_progress": state["progress_ms"] / playing_song_duration,
                         "diff_amount_ms": diff,
                         "state": state,
-                        "timestamp": state["timestamp"]
+                        "timestamp": state["timestamp"],
+                        "prev_timestamp": prev_timestamp
                     })
         if "progress_ms" in state:
-            prev_progress = state["progress_ms"] 
+            prev_progress = state["progress_ms"]
 
         prev_timestamp = state["timestamp"]
 
     return events
+
 
 def get_track_info(spotify, t_id, track_cache):
     if t_id in track_cache:
@@ -139,6 +145,7 @@ def get_track_info(spotify, t_id, track_cache):
 
             track_cache[t_id] = info
             return info
+
 
 def add_info_to_events(events):
     client = pymongo.MongoClient("localhost", 27017)
@@ -162,7 +169,6 @@ def fix_duration():
     client = pymongo.MongoClient("localhost", 27017)
     spotify = client.spotify
 
-
     query = {
         "duration_ms": {"$exists": False},
         "track_id": {"$exists": True}
@@ -178,12 +184,13 @@ def fix_duration():
         res = spotify.player.update_many(
             {"track_id": t_id},
             {"$set": {"duration_ms": duration}
-        })
+             })
 
         done += res.modified_count
         print("Updated {}, cumulative total = {}".format(res.modified_count, done))
 
         track = spotify.player.find_one(query);
+
 
 def update_clean_events():
     client = pymongo.MongoClient("localhost", 27017)
@@ -207,32 +214,40 @@ def print_events(events):
         print(" {}".format(e["action"]), end="")
         if e["action"] == "play" or e["action"] == "change_track":
             print(" {} by {}".format(e["track"], e["artist"]), end="")
-        if e["action"] == "skip":      
+        if e["action"] == "skip":
             print(" to {} by {} after {}%".format(e["track"], e["artist"], int(100 * e["prev_progress"])), end="")
         if e["action"] == "seek":
             print(" track {} by {} from {}% to {}% diff={}"
-                .format(e["track"], e["artist"], int(100 * e["prev_progress"]), int(100 * e["current_progress"]), e["diff_amount_ms"]), end="")
+                  .format(e["track"], e["artist"], int(100 * e["prev_progress"]), int(100 * e["current_progress"]),
+                          e["diff_amount_ms"]), end="")
         if e["action"] == "skip_track":
             print(" after {}%".format(int(100 * e["prev_progress"])), end="")
         if "prev_track_id" in e and e["prev_track_id"] is not None:
             print(" previous track = {}".format(e["prev_track"]), end="")
         print()
 
+
 def refresh_events(spotify):
     events = spotify.events.find({}, sort=[("timestamp", pymongo.DESCENDING)])
-    after = None
-    states = None
-    initial_state = {}
+    logging.info("Refreshing events")
 
     if events.count() > 0:
         after = events[0]["timestamp"]
-        states = spotify.states.find({"timestamp": {"$gt", after}}, sort=[("timestamp", pymongo.ASCENDING)])
+        states = spotify.player.find({"timestamp": {"$gt": after}}, sort=[("timestamp", pymongo.ASCENDING)])
         logging.info("Processing events after {}({})".format(after, unix_to_iso(after)))
+        initial_state = events[0]
     else:
-        logging.info("Processing all events")
-        states = spotify.states.find(sort=[("timestamp", pymongo.ASCENDING)])
+        logging.info("Processing all events (no existing events)")
+        states = spotify.player.find(sort=[("timestamp", pymongo.ASCENDING)])
+        initial_state = {}
 
+    logging.info("Initial state for event gen: {}".format(initial_state.__str__()))
+    logging.info("Num states to process = {}".format(states.count()))
     new_events = gen_events(initial_state, states)
+    logging.info("Generated {} new events".format(len(new_events)))
+
+    if len(new_events) > 0:
+        spotify.events.insert_many(new_events)
 
 
 def main():
@@ -247,13 +262,17 @@ def main():
     if len(sys.argv) <= 1:
         print("Provide action")
         return
-    
-    action =sys.argv[1]
+
+    action = sys.argv[1]
     if action == "print":
-        events = gen_events()
+        events = spotify.events.find()
         add_info_to_events(events)
         print_events(events)
+    elif action == "refresh":
+        refresh_events(spotify)
+
     else:
         print("Not sure what you mean mate")
 
-if __name__=="__main__":main()
+
+if __name__ == "__main__": main()
