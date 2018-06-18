@@ -2,6 +2,7 @@ import pymongo
 import datetime
 import sys
 import logging
+import read
 
 # If we move onto next song 100 * SKIP_THRESH % way through
 # then don't consider it a skip
@@ -147,22 +148,42 @@ def get_track_info(spotify, t_id, track_cache):
             return info
 
 
-def add_info_to_events(events):
+def add_info_to_events():
     client = pymongo.MongoClient("localhost", 27017)
     spotify = client.spotify
     track_cache = {}
 
-    for event in events:
-        if "track_id" in event["state"]:
-            t_id = event["state"]["track_id"]
-            info = get_track_info(spotify, t_id, track_cache)
-            event["track"] = info["track"]
-            event["artist"] = info["artist"]
-        if "prev_track_id" in event and event["prev_track_id"] is not None:
-            t_id = event["prev_track_id"]
-            info = get_track_info(spotify, t_id, track_cache)
-            event["prev_track"] = info["track"]
-            event["prev_artist"] = info["artist"]
+    events_without_track = spotify.events.find({"state.track_id": {"$exists": True}, "track": {"$exists": False}})
+    events_without_prev_track = spotify.events.find({"state.track_id": {"$exists": True}, "prev_track": {"$exists": False}})
+
+    logging.info("Found {} without track, {} without prev track"
+                 .format(events_without_track.count(), events_without_prev_track.count()))
+
+    for event in events_without_track:
+        t_id = event["state"]["track_id"]
+        info = get_track_info(spotify, t_id, track_cache)
+
+        spotify.events.update(
+            {"_id": event["_id"]},
+            {"$set":
+                 {"track": info["track"],
+                  "artist": info["artist"]}
+             })
+
+    logging.info("Finished adding info to track events")
+
+    for event in events_without_prev_track:
+        t_id = event["state"]["track_id"]
+        info = get_track_info(spotify, t_id, track_cache)
+
+        spotify.events.update(
+            {"_id": event["_id"]},
+            {"$set":
+                 {"prev_track": info["track"],
+                  "prev_artist": info["artist"]}
+             })
+
+    logging.info("Finished adding info to prev track events")
 
 
 def fix_duration():
@@ -249,6 +270,9 @@ def refresh_events(spotify):
     if len(new_events) > 0:
         spotify.events.insert_many(new_events)
 
+    read.update_full_tracks()
+    add_info_to_events()
+
 
 def main():
     logging.basicConfig(
@@ -265,8 +289,8 @@ def main():
 
     action = sys.argv[1]
     if action == "print":
+        add_info_to_events()
         events = spotify.events.find()
-        add_info_to_events(events)
         print_events(events)
     elif action == "refresh":
         refresh_events(spotify)
