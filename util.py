@@ -1,4 +1,5 @@
 import datetime
+import pymongo
 
 
 # Compare to second accuracy (never need any better in this application)
@@ -9,3 +10,8 @@ def datetimes_equal(dt1: datetime.datetime, dt2: datetime.datetime) -> bool:
            and dt1.hour == dt2.hour \
            and dt1.minute == dt2.minute \
            and dt1.second == dt2.second
+
+
+def get_spotify_db():
+    client = pymongo.MongoClient("localhost", 27017)  # Same in prod
+    return client.spotify

@@ -3,11 +3,11 @@ import csv
 import pymongo
 from spotify import *
 import sys
-import json
+import util
+
 
 def basic():
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
+    spotify = util.get_spotify_db()
 
     tracks = spotify.tracks.find({}, sort=[("played_at", pymongo.DESCENDING)])
     for track in tracks:
@@ -15,13 +15,8 @@ def basic():
 
 
 # Download full album data if it doesn't already exist in database
-def update_albums(creds=None):
-    if creds is None:
-        creds = get_credentials()
-
+def update_albums(creds, spotify):
     ids_to_get = []
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
 
     tracks = spotify.tracks.find({})
     album_ids = spotify.albums.distinct("id")
@@ -37,13 +32,8 @@ def update_albums(creds=None):
 
 
 # Download full artist data
-def update_artists(creds=None):
-    if creds is None:
-        creds = get_credentials()
-
+def update_artists(creds, spotify):
     ids_to_get = []
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
 
     tracks = spotify.tracks.find({})
     artist_ids = spotify.artists.distinct("id")
@@ -62,13 +52,8 @@ def update_artists(creds=None):
         spotify.artists.insert_many(artist_data)
 
 
-def update_features(creds=None):
-    if creds is None:
-        creds = get_credentials()
-
+def update_features(creds, spotify):
     ids_to_get = []
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
 
     tracks = spotify.tracks.find({})
     feature_ids = spotify.features.distinct("id")
@@ -79,6 +64,7 @@ def update_features(creds=None):
 
     logging.info("Found {} features ids to download".format(len(ids_to_get)))
     feat_data = get_track_features(ids_to_get, creds)
+
     def notNone(x):
         return x is not None
 
@@ -107,7 +93,8 @@ def get_unknown_track_ids():
 
     return [item for item in all_ids if item not in full_ids]
 
-def update_full_tracks(creds = None):
+
+def update_full_tracks(creds=None):
     if creds is None:
         creds = get_credentials()
 
@@ -122,7 +109,6 @@ def update_full_tracks(creds = None):
         logging.info("[TRACK UPDATE] done inserting tracks")
     else:
         logging.info("[TRACK UPDATE] no tracks to update")
-
 
     return len(ids)
 
@@ -153,7 +139,6 @@ def track_csv(out_name):
         empty_feat["tempo"] = ""
         empty_feat["time_signature"] = ""
 
-
         for track in tracks:
             # Get artist data
             artist = spotify.artists.find_one({"id": track["track"]["artists"][0]["id"]})
@@ -161,7 +146,7 @@ def track_csv(out_name):
             if feat is None:
                 logging.info("NO FEATURE FOR {}".format(track["track"]["id"]))
                 feat = empty_feat
-                
+
             data = [
                 track["played_at"],
                 track["track"]["id"],
@@ -188,6 +173,7 @@ def track_csv(out_name):
 
             writer.writerow(data)
 
+
 def print_recent():
     client = pymongo.MongoClient("localhost", 27017)
     spotify = client.spotify
@@ -200,25 +186,30 @@ def print_recent():
             return
 
 
+def update():
+    creds = get_credentials()
+    spotify = util.get_spotify_db()
+
+    logging.info("Updating features...")
+    update_features(creds, spotify)
+
+    logging.info("Updating atists...")
+    update_artists(creds, spotify)
+
+    logging.info("Updating albums...")
+    update_albums(creds, spotify)
+
+
 def main():
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S', filename='output.log')
     logging.getLogger().addHandler(logging.StreamHandler())
-
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-    creds = get_credentials()
-    logging.info("Updating features...")
-    update_features(creds)
-
-    logging.info("Updating atists...")
-    update_artists(creds)
-
-    logging.info("Updating albums...")
-    update_albums(creds)
+    update()
 
     if len(sys.argv) > 1:
         if sys.argv[1] == "recent":

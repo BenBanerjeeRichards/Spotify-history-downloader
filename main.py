@@ -9,8 +9,7 @@ class DownloadException(Exception):
 
 
 def insert(tracks):
-    client = pymongo.MongoClient("localhost", 27017)  # Same in prod
-    spotify = client.spotify
+    spotify = util.get_spotify_db()
 
     # Get last track listened to stored in db
     # This is to ensure we don't duplicate items in database
@@ -29,15 +28,11 @@ def insert(tracks):
 
     if len(tracks) > 0:
         spotify.tracks.insert_many(tracks)
-    client.close()  # TODO can we use with..as clause?
 
 
 def remove_tracks_before_inc(tracks, stop_at_track):
     new = []
     for track in tracks:
-        print(track["played_at"])
-        print(stop_at_track["played_at"])
-
         if util.datetimes_equal(track["played_at"], stop_at_track["played_at"]):
             logging.info("Found repeat track, stopping: {}".format(track["played_at"]))
 
@@ -75,9 +70,7 @@ def main():
     insert(j["items"])
 
     # Update stuff
-    read.update_albums()
-    read.update_artists()
-    read.update_features()
+    read.update()
 
 
 if __name__ == "__main__": main()
