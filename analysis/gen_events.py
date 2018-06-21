@@ -9,8 +9,7 @@ import read
 SKIP_THRESH = 0.95
 CLEAN_BATCH_SIZE = 1000
 INACTIVE_TIME_THRESH_MS = 1000  # If more than 1s apart create separate events
-SEEK_UPPER_LIMIT_MS = 1500
-SEEK_LOWER_LIMIT_MS = -1 * SEEK_UPPER_LIMIT_MS
+SEEK_LIMIT = 1500
 
 
 def unix_to_iso(timestamp_ms):
@@ -113,7 +112,7 @@ def gen_events(initial_state, states):
                 diff_progress = state["progress_ms"] - prev_progress
                 diff_time = state["timestamp"] - prev_timestamp
                 diff = diff_progress - diff_time
-                if diff > SEEK_UPPER_LIMIT_MS or diff < SEEK_LOWER_LIMIT_MS:
+                if abs(diff) > SEEK_LIMIT:
                     events.append({
                         "action": "seek",
                         "prev_progress": prev_progress / playing_song_duration,
