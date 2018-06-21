@@ -115,7 +115,7 @@ def gen_events(initial_state, states):
                 if abs(diff) > SEEK_LIMIT:
                     events.append({
                         "action": "seek",
-                        "prev_progress": prev_progress / playing_song_duration,
+                        "prev_progress": prev_progress / state["duration_ms"],
                         "current_progress": state["progress_ms"] / state["duration_ms"],
                         "diff_amount_ms": diff,
                         "state": state,
