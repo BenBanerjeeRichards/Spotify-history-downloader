@@ -116,7 +116,7 @@ def gen_events(initial_state, states):
                     events.append({
                         "action": "seek",
                         "prev_progress": prev_progress / playing_song_duration,
-                        "current_progress": state["progress_ms"] / playing_song_duration,
+                        "current_progress": state["progress_ms"] / state["duration_ms"],
                         "diff_amount_ms": diff,
                         "state": state,
                         "timestamp": state["timestamp"],
