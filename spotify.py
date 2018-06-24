@@ -1,8 +1,9 @@
 import logging
 import os
 import time
-
+import json
 import requests
+
 
 class Credentials:
     def __init__(self, client_id, client_secret, refresh):
@@ -92,6 +93,7 @@ def search(query, type, type_key, creds):
     res = requests.get("https://api.spotify.com/v1/search", params={"q": query, "type": type}, headers=head)
     return res.json()[type_key]["items"]
 
+
 def get_track_features(ids, creds):
     def extract(j):
         return j["audio_features"]
@@ -105,6 +107,7 @@ def get_tracks(ids, creds):
 
     return spotify_multiple_req("https://api.spotify.com/v1/tracks", ids, creds, extract, 50)
 
+
 def get_current_playback(creds):
     head = {"Authorization": "Bearer {}".format(creds.access_token)}
     res = requests.get("https://api.spotify.com/v1/me/player", headers=head)
@@ -113,3 +116,86 @@ def get_current_playback(creds):
     if len(res.text) == 0:
         return None
     return res.json()
+
+
+def spotify_get_json(url, creds):
+    head = {"Authorization": "Bearer {}".format(creds.access_token)}
+    res = requests.get(url, headers=head)
+    res.raise_for_status()
+    return res.json()
+
+
+# Return limited playlist information
+# Track id, track name and date added
+def get_playlist_basic(user_id, playlist_id, creds):
+    url = "https://api.spotify.com/v1/users/{}/playlists/{}/tracks?fields=items(track(name%2Cid)%2Cadded_at)%2Cnext&limit={}" \
+        .format(user_id, playlist_id, 100)
+
+    return paging_get_all(url, creds)
+
+
+def get_saved_tracks(creds):
+    return paging_get_all("https://api.spotify.com/v1/me/tracks", creds)
+
+
+def chunked_function_call(function, constant_params, item_list, chunk_size, list_param_name):
+    list_chunks = chunks(item_list, chunk_size)
+    ret = []
+    for chunk in list_chunks:
+        constant_params[list_param_name] = chunk
+        ret += function(**constant_params)
+
+    return ret
+
+
+def remove_from_playlist(user_id, playlist_id, track_ids, creds):
+    tracks_json = []
+    for t_id in track_ids:
+        tracks_json.append({"uri": "spotify:track:{}".format(t_id)})
+
+    def remove_from_pl_inner(t_json):
+        head = {"Authorization": "Bearer {}".format(creds.access_token)}
+        url = "https://api.spotify.com/v1/users/{}/playlists/{}/tracks".format(user_id, playlist_id)
+        res = requests.delete(url, headers=head, json={"tracks": t_json})
+        res.raise_for_status()
+        return res.json()
+
+    return chunked_function_call(remove_from_pl_inner, {}, tracks_json, 100, "t_json")
+
+
+def add_to_playlist(user_id, playlist_id, track_ids, creds):
+    tracks_json = []
+    for t_id in track_ids:
+        tracks_json.append("spotify:track:{}".format(t_id))
+
+    def remove_from_pl_inner(t_json):
+        head = {"Authorization": "Bearer {}".format(creds.access_token)}
+        url = "https://api.spotify.com/v1/users/{}/playlists/{}/tracks".format(user_id, playlist_id)
+        res = requests.post(url, headers=head, json={"uris": t_json})
+        res.raise_for_status()
+        return res.json()
+
+    return chunked_function_call(remove_from_pl_inner, {}, tracks_json, 100, "t_json")
+
+
+def transfer_playlists(user_id, playlist_from, playlist_to, creds, delete_from_orig = False):
+    pl_tracks = get_playlist_basic(user_id, playlist_from, creds)
+    from_ids = list(map(lambda x: x["track"]["id"], pl_tracks))
+    logging.info("Transferring {} tracks from spotify:user:{}:playlist:{} to spotify:user:{}:playlist:{}"
+                 .format(len(from_ids), user_id, playlist_from, user_id, playlist_to))
+
+    add_to_playlist(user_id, playlist_to, from_ids, creds)
+
+    if delete_from_orig:
+        logging.info("Deleting all tracks from from playlist")
+        remove_from_playlist(user_id, playlist_from, from_ids, creds)
+
+
+def paging_get_all(url, creds):
+    items = []
+    while url:
+        response = spotify_get_json(url, creds)
+        items += response["items"]
+        url = response["next"] if "next" in response else None
+
+    return items
