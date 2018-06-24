@@ -1,6 +1,6 @@
 # Spotify history downloader
 
-Download your spotify listening history
+Continually download your spotify listening history. Gets around the 50 song history limit of the spotify API.
 
 * Download the songs you listen to for > 30 seconds (this is your normal spotify listening history)
 * Generate detailed events (sub second accuracy) for spotify including play, skip, seek, pause, repeat, shuffle and spotify connect
