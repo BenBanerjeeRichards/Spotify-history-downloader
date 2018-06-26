@@ -59,13 +59,16 @@ def main():
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S', filename='output.log')
-    logging.getLogger().addHandler(logging.StreamHandler())
 
     # Disable logging we don't need
     # O/W we end up with GBs of logs in just 24 hours
     # (mainly thanks to player state requests, of which there are thousands of)
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger().addHandler(logging.StreamHandler())
+    logging.getLogger().setLevel(logging.DEBUG)
+
+    logging.info("HELLO THERE")
 
     creds = get_credentials()
     j = get_recently_played(creds)
@@ -77,7 +80,7 @@ def main():
     # Update events
     analysis.gen_events.refresh_events(util.get_spotify_db())
 
-    # Update sounds good
+    # Update sounds goodpy
     scripts.sounds_good.run_sounds_good()
 
 

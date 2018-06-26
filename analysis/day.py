@@ -5,6 +5,7 @@ from FreqDict import FreqDict
 import json
 from bottle import Bottle, request, response, run, hook, route
 import sys
+import util
 
 def get_tracks(date, timezone = None):
     if timezone is None:
@@ -15,7 +16,7 @@ def get_tracks(date, timezone = None):
     start = timezone.localize(start)
     end = timezone.localize(end)
     client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
+    spotify = util.get_spotify_db()
 
     query = {
         "played_at": {

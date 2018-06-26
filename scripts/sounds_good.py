@@ -2,11 +2,13 @@ import datetime
 import logging
 import spotify
 import dateutil.parser
+import util
 
-PLAYLIST_ID = "0P6cerId9ZFhdr4kHEmTry"
-MOVE_AFTER = datetime.timedelta(days=30)
-MOVE_TO_PLAYLIST = "3ZEphevFVeYJin3VKfapgl"
-USER_ID = "benbanerjeerichards"
+CONFIG = util.config()["sounds_good"]
+PLAYLIST_ID = CONFIG["playlist_id"]
+MOVE_AFTER = datetime.timedelta(days=CONFIG["move_after_days"])
+MOVE_TO_PLAYLIST = CONFIG["move_to_playlist"]
+USER_ID = CONFIG["user_id"]
 
 
 def get_track_ids(items):

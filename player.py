@@ -3,12 +3,16 @@ import time
 import pymongo
 import logging
 from spotify import get_current_playback, get_credentials
+import util
 
-REQ_PER_SECOND = 8  # Goal number of updates of state per second
+CONFIG = util.config()["player"]
+
+REQ_PER_SECOND = CONFIG["req_per_second"]
 REFRESH_CRED_SECS = 30 * 60  # Refresh credentials every 30 minutes
-BATCH_SIZE_INSERT = 3 * 60  # Once per minute
+BATCH_SIZE_INSERT = CONFIG["batch_size_insert"]
 SLEEP_AFTER_FAILURE_BASE = 0.5
-LOG_AFTER = 10
+LOG_AFTER = CONFIG["log_after"]
+
 
 def get_player_state(creds):
     start = time.time() * 1000
@@ -41,8 +45,7 @@ def get_player_state(creds):
 
 def store_player_states(states):
     start = time.time()
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
+    spotify = util.get_spotify_db()
     spotify.player.insert_many(states)
     logging.debug("[INSERT] Inserted {} states in {}".format(len(states), time.time() - start))
 

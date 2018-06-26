@@ -77,8 +77,7 @@ def update_features(creds, spotify):
 # Tracks from player and tracks we don't have full track info
 # about in full_tracks
 def get_unknown_track_ids():
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
+    spotify = util.get_spotify_db()
 
     # Ids from player database
     # If never played for > 30 secs then doesn't exist in tracks collection
@@ -98,8 +97,7 @@ def update_full_tracks(creds=None):
     if creds is None:
         creds = get_credentials()
 
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
+    spotify = util.get_spotify_db()
 
     ids = get_unknown_track_ids()
     if len(ids) > 0:
@@ -114,8 +112,7 @@ def update_full_tracks(creds=None):
 
 
 def track_csv(out_name):
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
+    spotify = util.get_spotify_db()
 
     tracks = spotify.tracks.find({}, sort=[("played_at", pymongo.DESCENDING)])
     with open(out_name, 'w', newline='', encoding='utf-8') as f:
@@ -175,8 +172,7 @@ def track_csv(out_name):
 
 
 def print_recent():
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
+    spotify = util.get_spotify_db()
 
     tracks = spotify.tracks.find({}, sort=[("played_at", pymongo.DESCENDING)])
     for i, track in enumerate(tracks):
@@ -187,8 +183,8 @@ def print_recent():
 
 
 def update():
-    creds = get_credentials()
     spotify = util.get_spotify_db()
+    creds = get_credentials()
 
     logging.info("Updating features...")
     update_features(creds, spotify)

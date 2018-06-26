@@ -1,0 +1,29 @@
+db:
+  host: localhost
+  port: 27017
+
+player:
+  # Number of times to poll player api per second. If set too high (around 10) rate limits will start to apply
+  req_per_second: 8
+  # After how many requests to log a summary. Too low and logs will grow quickly.
+  log_after: 10
+  # How often to insert states into database.
+  batch_size_insert: 200
+
+gen_events:
+  # If less than this percent (0-1) at end of song then generate skip
+  skip_thresh: 0.95
+  # Length of jump in playback of a song to generate a seek event
+  seek_limit: 1500
+  # When to generate new events from inactive states (not really used anymore)
+  inactive_time_thresh_ms: 1000
+
+gdpr:
+  # Location of spotify GDPR export
+  export_path: download/StreamingHistory.json
+
+sounds_good:
+  playlist_id: 0P6cerId9ZFhdr4kHEmTry
+  move_to_playlist: 3ZEphevFVeYJin3VKfapgl
+  user_id: benbanerjeerichards
+  move_after_days: 30

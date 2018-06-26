@@ -3,13 +3,15 @@ import datetime
 import sys
 import logging
 import read
+import util
 
 # If we move onto next song 100 * SKIP_THRESH % way through
 # then don't consider it a skip
-SKIP_THRESH = 0.95
+CONFIG = util.config()["gen_events"]
+SKIP_THRESH = CONFIG["skip_thresh"]
 CLEAN_BATCH_SIZE = 1000
-INACTIVE_TIME_THRESH_MS = 1000  # If more than 1s apart create separate events
-SEEK_LIMIT = 1500
+INACTIVE_TIME_THRESH_MS = CONFIG["inactive_time_thresh_ms"]  # If more than 1s apart create separate events
+SEEK_LIMIT = CONFIG["seek_limit"]
 
 
 def unix_to_iso(timestamp_ms):
@@ -148,8 +150,7 @@ def get_track_info(spotify, t_id, track_cache):
 
 
 def add_info_to_events():
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
+    spotify = util.get_spotify_db()
     track_cache = {}
 
     events_without_track = spotify.events.find({"state.track_id": {"$exists": True}, "track": {"$exists": False}})
@@ -186,8 +187,7 @@ def add_info_to_events():
 
 
 def fix_duration():
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
+    spotify = util.get_spotify_db()
 
     query = {
         "duration_ms": {"$exists": False},
@@ -213,8 +213,7 @@ def fix_duration():
 
 
 def update_clean_events():
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
+    spotify = util.get_spotify_db()
 
     states = spotify.player_clean.find({}, sort=[("timestamp", pymongo.DESCENDING)])
     after = None
@@ -279,8 +278,7 @@ def main():
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S', filename='gen_events.log')
     logging.getLogger().addHandler(logging.StreamHandler())
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
+    spotify = util.get_spotify_db()
 
     if len(sys.argv) <= 1:
         print("Provide action")

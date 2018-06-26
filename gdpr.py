@@ -2,10 +2,10 @@ import pymongo
 import datetime
 import json 
 from spotify import Credentials, get_credentials, search, get_tracks
-import sys
-import pickle
+import util
 
-EXPORT_PATH = "download/StreamingHistory.json"
+CONFIG = util.config()["gdpr"]
+EXPORT_PATH = CONFIG["export_path"]
 
 def parse_file(path):
     with open(path, encoding="utf-8") as f:
@@ -66,8 +66,7 @@ def json_serial(obj):
 
 
 def load(path):
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
+    spotify = util.get_spotify_db()
     ids = []
     data = None
 
@@ -107,8 +106,7 @@ def add_track_ids():
     data = remove_recent(parse_file(EXPORT_PATH))
     data = remove_short_plays(data)
 
-    client = pymongo.MongoClient("localhost", 27017)
-    spotify = client.spotify
+    spotify = util.get_spotify_db()
     creds = get_credentials()
     count = len(data)
     failures = []
