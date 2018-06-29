@@ -145,7 +145,7 @@ def track_csv(out_name):
                 feat = empty_feat
 
             data = [
-                track["played_at"],
+                str(track["played_at"]),
                 track["track"]["id"],
                 track["track"]["name"],
                 track["track"]["duration_ms"],
