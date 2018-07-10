@@ -1,7 +1,12 @@
 import time
 
-import pymongo
 import logging
+
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.DEBUG,
+    datefmt='%Y-%m-%d %H:%M:%S', filename='newplayer.log')
+
 from spotify import get_current_playback, get_credentials
 import util
 
@@ -106,11 +111,6 @@ def run():
             batch_start_time = end_b
 
 def main():
-    logging.basicConfig(
-        format='%(asctime)s %(levelname)-8s %(message)s',
-        level=logging.DEBUG,
-        datefmt='%Y-%m-%d %H:%M:%S', filename='player.log')
-    
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 

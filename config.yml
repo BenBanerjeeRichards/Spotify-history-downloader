@@ -23,7 +23,11 @@ gdpr:
   export_path: download/StreamingHistory.json
 
 sounds_good:
+  # The Sounds Good playlist id
   playlist_id: 0P6cerId9ZFhdr4kHEmTry
+  # Archive playlist to move to afer move_afer_days days
   move_to_playlist: 3ZEphevFVeYJin3VKfapgl
+  # Spotify user associated with API credentials
   user_id: benbanerjeerichards
+  # Move from playlist_id to move_to_playlist if not saved to library within move_after_days
   move_after_days: 30
