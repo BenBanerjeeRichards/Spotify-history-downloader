@@ -54,3 +54,7 @@ def config():
         logging.error("No config file found, checked " + str(possible_locations))
 
     return CONFIG
+
+
+def percent(a: int, b: int) -> int:
+    return int((a / b) * 100)
