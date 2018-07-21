@@ -31,11 +31,13 @@ def archive():
     today_start = int(today.timestamp()) * 1000
 
     to_archive = spotify.player.find({"timestamp": {"$lt": today_start}}).sort("timestamp", pymongo.ASCENDING)
+    n_total = to_archive.count()
 
     current_date = datetime.datetime.fromtimestamp(int(to_archive[0]["timestamp"]) / 1000)
     current_date = datetime.datetime(current_date.year, current_date.month, current_date.day, 0, 0, 0)
     current_date_end_ts = (int(current_date.timestamp()) + 86400) * 1000
     zip_file = zipfile.ZipFile("archive.zip", mode="w", compression=zipfile.ZIP_DEFLATED)
+    i = 0
 
     while current_date < today:
         states_for_date = spotify.player.find({
@@ -48,11 +50,10 @@ def archive():
         })
 
         n_day = states_for_date.count()
-        logging.info("Found {} states for day {}, saving them all".format(n_day, current_date))
 
         file_name = "{}-{}-{}.json".format(current_date.year, current_date.month, current_date.day)
-        write_to_archive(zip_file, file_name, states_for_date)
-
+        i += write_to_archive(zip_file, file_name, states_for_date)
+        logging.info("[{}%] Wrote {} states for day {}".format(util.percent(i, n_total), n_day, current_date))
         current_date = datetime.datetime.fromtimestamp((current_date_end_ts / 1000))
         current_date_end_ts = (int(current_date.timestamp()) + 86400) * 1000
 
