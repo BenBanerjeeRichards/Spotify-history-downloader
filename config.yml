@@ -31,3 +31,6 @@ sounds_good:
   user_id: benbanerjeerichards
   # Move from playlist_id to move_to_playlist if not saved to library within move_after_days
   move_after_days: 30
+
+archive_player:
+  percent_to_archive: 0.95
