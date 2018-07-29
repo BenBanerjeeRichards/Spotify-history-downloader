@@ -1,13 +1,11 @@
 import pymongo
 import datetime
 import pytz
-from FreqDict import FreqDict
-import json
-from bottle import Bottle, request, response, run, hook, route
-import sys
+from analysis.FreqDict import FreqDict
 import util
 
-def get_tracks(date, timezone = None):
+
+def get_tracks(date, timezone=None):
     if timezone is None:
         timezone = pytz.timezone("GMT")
 
@@ -21,10 +19,11 @@ def get_tracks(date, timezone = None):
     query = {
         "played_at": {
             "$gt": start,
-            "$lt": end     
+            "$lt": end
         }
     }
     return spotify.tracks.find(query)
+
 
 def simple(track):
     return {
@@ -34,6 +33,7 @@ def simple(track):
         "full": track
     }
 
+
 def track_frequency(tracks):
     freq = FreqDict()
     for t in tracks:
@@ -42,7 +42,8 @@ def track_frequency(tracks):
 
     return freq.sort()
 
-def limit_top_tracks(tracks, limit = 5):
+
+def limit_top_tracks(tracks, limit=5):
     # Return top 5 (or less)
     top_tracks = []
     for track in tracks:
@@ -59,17 +60,18 @@ def limit_top_tracks(tracks, limit = 5):
         top_tracks.append({
             "artist": parts[1],
             "name": parts[0],
-            "plays": track[1] 
+            "plays": track[1]
         })
 
     return top_tracks
+
 
 def time_distribution(tracks):
     freq = FreqDict()
     for track in tracks:
         freq.add(track["played_at"].hour)
 
-    d =  freq.d
+    d = freq.d
     arr = []
     for i in range(0, 24):
         if i in d:
@@ -79,7 +81,8 @@ def time_distribution(tracks):
 
     return arr
 
-def get_stats(date, timezone = None):
+
+def get_stats(date, timezone=None):
     tracks = list(map(lambda x: simple(x), get_tracks(date, timezone)))
     top_tracks = limit_top_tracks(track_frequency(tracks))
     return {
@@ -88,34 +91,4 @@ def get_stats(date, timezone = None):
         "time_dist": time_distribution(tracks)
     }
 
-@route("/spotify")
-def spotify():
-    return get_stats(datetime.datetime.now())
 
-@route("/spotify/<year>/<month>/<day>")
-def spotify(year, month, day):
-    return get_stats(datetime.datetime(int(year), int(month), int(day)))
-
-@hook('after_request')
-def enable_cors():
-    """
-    You need to add some headers to each request.
-    Don't use the wildcard '*' for Access-Control-Allow-Origin in production.
-    """
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'PUT, GET, POST, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
-
-def main():
-    if len(sys.argv) != 2:
-        print("Pass either DEV or PROD")
-        return
-
-    if sys.argv[1] == "DEV":
-        run(host="localhost", port=80)
-    elif sys.argv[1] == "PROD":
-        run(host="206.189.24.92", port=9876)
-    else:
-        print("Provide PROD or DEV")
-
-if __name__ == "__main__":main()

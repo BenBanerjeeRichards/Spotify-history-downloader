@@ -3,28 +3,28 @@ DATA = {"top_tracks": [], "count": 0}
 window.onload = function() {
     var app = new Vue({
         el: '#top-tracks',
-        data: DATA,
-    })
+        data: DATA
+    });
 
     var n_plays = new Vue({
         el: "#num-plays",
-        data: DATA,
-    })
+        data: DATA
+    });
 
     // Simple request, just use old school ajax
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
             DATA = JSON.parse(this.responseText);
-            console.log(DATA)
+            console.log(DATA);
             Vue.set(app.data, "top_tracks", DATA["top_tracks"])
         }
     };
-    xhttp.open("GET", "http://206.189.24.92:9876/spotify", true);
+    xhttp.open("GET", "http://localhodst:8080/spotify", true);
     xhttp.send();
 
     var ctx = document.getElementById("timeGraph").getContext('2d');
-    var myChart = new Chart(ctx, {
+    new Chart(ctx, {
         type: 'bar',
         data: {
             labels: ["midnight", "1am", "2am", "3am", "4am", "5am", "6am", "7am", "8am", "9am", "10am", "11am", "12am", "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm", "9pm", "10pm", "11pm"],
@@ -68,12 +68,9 @@ window.onload = function() {
                 xAxes: [{
                     gridLines: {
                         color: "rgba(0, 0, 0, 0)"
-                    },
-
+                    }
                 }]
             }
         }
     });
-
-
-}
+};

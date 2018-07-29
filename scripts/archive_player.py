@@ -58,8 +58,6 @@ def archive():
         current_date_end_ts = (int(current_date.timestamp()) + 86400) * 1000
 
 
-
-
 def main():
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
