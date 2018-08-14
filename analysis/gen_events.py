@@ -1,7 +1,15 @@
+import logging
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.DEBUG,
+    datefmt='%Y-%m-%d %H:%M:%S', filename='gen_events.log')
+
+logging.getLogger().addHandler(logging.StreamHandler())
+
+
 import pymongo
 import datetime
 import sys
-import logging
 import read
 import util
 
@@ -154,7 +162,7 @@ def add_info_to_events():
     track_cache = {}
 
     events_without_track = spotify.events.find({"state.track_id": {"$exists": True}, "track": {"$exists": False}})
-    events_without_prev_track = spotify.events.find({"state.track_id": {"$exists": True}, "prev_track": {"$exists": False}})
+    events_without_prev_track = spotify.events.find({"prev_track_id": {"$exists": True}})
 
     logging.info("Found {} without track, {} without prev track"
                  .format(events_without_track.count(), events_without_prev_track.count()))
@@ -173,7 +181,10 @@ def add_info_to_events():
     logging.info("Finished adding info to track events")
 
     for event in events_without_prev_track:
-        t_id = event["state"]["track_id"]
+        if "prev_track_id" not in event or event["prev_track_id"] is None:
+            logging.info("No prev_track_id exists in event {}".format(event["_id"]))
+            continue
+        t_id = event["prev_track_id"]
         info = get_track_info(spotify, t_id, track_cache)
 
         spotify.events.update(
@@ -209,22 +220,24 @@ def fix_duration():
         done += res.modified_count
         print("Updated {}, cumulative total = {}".format(res.modified_count, done))
 
-        track = spotify.player.find_one(query);
+        track = spotify.player.find_one(query)
 
 
-def update_clean_events():
+def fix_prev_track():
     spotify = util.get_spotify_db()
+    events = spotify.events.find({"state.track_id": {"$exists": True}})
+    prev_track_id = events[0]["state"]["track_id"]
 
-    states = spotify.player_clean.find({}, sort=[("timestamp", pymongo.DESCENDING)])
-    after = None
-    if states.count() > 0:
-        after = states[0]["timestamp"]
-        logging.info("Processsing states after {}({})".format(after, unix_to_iso(after)))
-    else:
-        print("Processing all states")
+    n = events.count()
+    for i, event in enumerate(events[1:]):
+        track_id = event["state"]["track_id"]
+        if track_id != prev_track_id:
+            spotify.events.update({"_id": event["_id"]}, {"$set": {"prev_track_id": prev_track_id}})
 
-    clean_events(after, spotify)
+        prev_track_id = track_id
 
+        if i % 1000:
+            logging.info("Completed {}%".format(util.percent(i, n)))
 
 def print_events(events):
     for e in events:
@@ -233,7 +246,7 @@ def print_events(events):
         print(" {}".format(e["action"]), end="")
         if e["action"] == "play" or e["action"] == "change_track":
             print(" {} by {}".format(e["track"], e["artist"]), end="")
-        if e["action"] == "skip":
+        if e["action"] == "skip_track":
             print(" to {} by {} after {}%".format(e["track"], e["artist"], int(100 * e["prev_progress"])), end="")
         if e["action"] == "seek":
             print(" track {} by {} from {}% to {}% diff={}"
@@ -273,12 +286,9 @@ def refresh_events(spotify):
 
 
 def main():
-    logging.basicConfig(
-        format='%(asctime)s %(levelname)-8s %(message)s',
-        level=logging.DEBUG,
-        datefmt='%Y-%m-%d %H:%M:%S', filename='gen_events.log')
-    logging.getLogger().addHandler(logging.StreamHandler())
     spotify = util.get_spotify_db()
+    # add_info_to_events()
+    # return
 
     if len(sys.argv) <= 1:
         print("Provide action")
