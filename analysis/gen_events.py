@@ -222,21 +222,21 @@ def fix_duration():
         track = spotify.player.find_one(query)
 
 
-def fix_prev_track():
+def add_prev_track_id():
     spotify = util.get_spotify_db()
     events = spotify.events.find({"state.track_id": {"$exists": True}})
     prev_track_id = events[0]["state"]["track_id"]
 
-    n = events.count()
-    for i, event in enumerate(events[1:]):
+    n_updated = 0
+    for event in events[1:]:
         track_id = event["state"]["track_id"]
-        if track_id != prev_track_id:
+        if track_id != prev_track_id and event["prev_track_id"] != prev_track_id:
+            n_updated += 1
             spotify.events.update({"_id": event["_id"]}, {"$set": {"prev_track_id": prev_track_id}})
 
         prev_track_id = track_id
 
-        if i % 1000:
-            logging.info("Completed {}%".format(util.percent(i, n)))
+    logging.info("Added prev track info to {} items".format(n_updated))
 
 
 def print_events(events):
@@ -281,9 +281,11 @@ def refresh_events(spotify):
     if len(new_events) > 0:
         spotify.events.insert_many(new_events)
 
+    add_prev_track_id()
+    logging.info("Added prev track info")
     read.update_full_tracks()
     add_info_to_events()
-
+    logging.info("Done processing events")
 
 def main():
     spotify = util.get_spotify_db()
