@@ -1,4 +1,4 @@
-DATA = {"top_tracks": [], "count": 0}
+DATA = {"top_tracks": [], "count": 0};
 
 window.onload = function() {
     var app = new Vue({
@@ -11,7 +11,6 @@ window.onload = function() {
         data: DATA
     });
 
-    // Simple request, just use old school ajax
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
@@ -22,6 +21,8 @@ window.onload = function() {
     };
     xhttp.open("GET", "http://localhodst:8080/spotify", true);
     xhttp.send();
+
+    $.getJSON()
 
     var ctx = document.getElementById("timeGraph").getContext('2d');
     new Chart(ctx, {

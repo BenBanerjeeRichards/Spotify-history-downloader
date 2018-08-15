@@ -6,7 +6,6 @@ logging.basicConfig(
 
 logging.getLogger().addHandler(logging.StreamHandler())
 
-
 import pymongo
 import datetime
 import sys
@@ -162,7 +161,7 @@ def add_info_to_events():
     track_cache = {}
 
     events_without_track = spotify.events.find({"state.track_id": {"$exists": True}, "track": {"$exists": False}})
-    events_without_prev_track = spotify.events.find({"prev_track_id": {"$exists": True}})
+    events_without_prev_track = spotify.events.find({"prev_track_id": {"$exists": True}, "prev_track": {"$exists": False}})
 
     logging.info("Found {} without track, {} without prev track"
                  .format(events_without_track.count(), events_without_prev_track.count()))
@@ -239,6 +238,7 @@ def fix_prev_track():
         if i % 1000:
             logging.info("Completed {}%".format(util.percent(i, n)))
 
+
 def print_events(events):
     for e in events:
         ts = unix_to_iso(e["timestamp"])
@@ -287,8 +287,6 @@ def refresh_events(spotify):
 
 def main():
     spotify = util.get_spotify_db()
-    # add_info_to_events()
-    # return
 
     if len(sys.argv) <= 1:
         print("Provide action")
