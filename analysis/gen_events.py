@@ -230,7 +230,7 @@ def add_prev_track_id():
     n_updated = 0
     for event in events[1:]:
         track_id = event["state"]["track_id"]
-        if track_id != prev_track_id and event["prev_track_id"] != prev_track_id:
+        if track_id != prev_track_id and event.get("prev_track_id") != prev_track_id:
             n_updated += 1
             spotify.events.update({"_id": event["_id"]}, {"$set": {"prev_track_id": prev_track_id}})
 
