@@ -58,3 +58,43 @@ def config():
 
 def percent(a: int, b: int) -> int:
     return int((a / b) * 100)
+
+
+def tracks_within_dates(db, start:datetime.datetime, end:datetime.datetime):
+    if start and end:
+        return db.tracks.find({
+            "played_at": {
+                "$lt": end,
+                "$gt": start
+            }
+        })
+
+    if start and not end:
+        return db.tracks.find({
+            "played_at": {
+                "$gt": start
+            }
+        })
+
+    if end and not start:
+        return db.tracks.find({
+            "played_at": {
+                "$lt": end,
+            }
+        })
+
+    return []
+
+
+def track_frequency(tracks: [object], reverse=True) -> [(str, int)]:
+    freq = {}
+    for track in tracks:
+        t_id = track["track"]["id"]
+        if t_id in freq:
+            freq[t_id] += 1
+        else:
+            freq[t_id] = 1
+
+    return sorted(freq.items(), key=lambda x:x[1], reverse=reverse)
+
+

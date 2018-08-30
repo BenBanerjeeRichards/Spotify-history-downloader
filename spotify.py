@@ -3,6 +3,7 @@ import os
 import time
 import json
 import requests
+from http import HTTPStatus
 
 
 class Credentials:
@@ -178,7 +179,7 @@ def add_to_playlist(user_id, playlist_id, track_ids, creds):
     return chunked_function_call(remove_from_pl_inner, {}, tracks_json, 100, "t_json")
 
 
-def transfer_playlists(user_id, playlist_from, playlist_to, creds, delete_from_orig = False):
+def transfer_playlists(user_id, playlist_from, playlist_to, creds, delete_from_orig=False):
     pl_tracks = get_playlist_basic(user_id, playlist_from, creds)
     from_ids = list(map(lambda x: x["track"]["id"], pl_tracks))
     logging.info("Transferring {} tracks from spotify:user:{}:playlist:{} to spotify:user:{}:playlist:{}"
@@ -199,3 +200,25 @@ def paging_get_all(url, creds):
         url = response["next"] if "next" in response else None
 
     return items
+
+
+def create_playlist(user: str, name: str, public: bool, collaborative: bool, description: str, creds):
+    body = {
+        "name": name,
+        "public": public,
+        "collaborative": collaborative,
+        "description": description
+    }
+
+    return authenticated_spotify_post("https://api.spotify.com/v1/users/{}/playlists".format(user, body, creds), body, creds)
+
+
+def authenticated_spotify_post(url, body: dict, creds):
+    head = {"Authorization": "Bearer {}".format(creds.access_token)}
+    res = requests.post(url, headers=head, json=body)
+    res.raise_for_status()
+
+    if res.status_code == HTTPStatus.NO_CONTENT:
+        return {}
+
+    return res.json()
