@@ -4,11 +4,11 @@ db:
 
 player:
   # Number of times to poll player api per second. If set too high (around 10) rate limits will start to apply
-  req_per_second: 8
+  req_per_second: 4
   # After how many requests to log a summary. Too low and logs will grow quickly.
   log_after: 10
   # How often to insert states into database.
-  batch_size_insert: 200
+  batch_size_insert: 100
 
 gen_events:
   # If less than this percent (0-1) at end of song then generate skip
