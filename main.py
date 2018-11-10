@@ -5,7 +5,7 @@ import dateutil.parser
 import util
 import analysis.gen_events
 import scripts.sounds_good
-
+from upload.upload import run_export
 
 class DownloadException(Exception):
     pass
@@ -113,6 +113,9 @@ def main():
 
     # Update sounds goodpy
     scripts.sounds_good.run_sounds_good()
+
+    # Backup
+    run_export()
 
 
 if __name__ == "__main__": main()
