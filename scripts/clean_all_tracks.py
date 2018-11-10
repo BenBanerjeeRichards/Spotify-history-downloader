@@ -12,7 +12,7 @@ def main():
         i = i + 1
         clean = clean_track(track["track"])
 
-        spotify.tracks.delete_one({"track.id": clean["id"]})
+        spotify.tracks.delete_one({"_id": track["_id"]})
         track["track"] = clean
         spotify.tracks.insert(track)
 
