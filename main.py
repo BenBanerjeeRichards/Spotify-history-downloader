@@ -6,6 +6,7 @@ import util
 import analysis.gen_events
 import scripts.sounds_good
 
+
 class DownloadException(Exception):
     pass
 
@@ -18,9 +19,11 @@ def insert(tracks):
     latest_track = spotify.tracks.find_one({}, sort=[("played_at", pymongo.DESCENDING)])
     logging.info("Retrieved tracks from spotify, filtering out ones played up to {}".format(latest_track["played_at"]))
 
-    # Properly parse dates
+    # Properly parse dates and remove stuff we don't care about
     for track in tracks:
         track["played_at"] = dateutil.parser.parse(track["played_at"])
+        track["track"] = clean_track(track["track"])
+
 
     if latest_track:
         tracks = remove_tracks_before_inc(tracks, latest_track)
@@ -30,6 +33,34 @@ def insert(tracks):
 
     if len(tracks) > 0:
         spotify.tracks.insert_many(tracks)
+
+
+def clean_artist(old_artist):
+    return {"name": old_artist["name"], "id": old_artist["id"]}
+
+
+# Remove items from spotify track object we don't care about
+# Saves space, esp. with file export
+def clean_track(old_track):
+    track = {"id": old_track["id"], "popularity": old_track["popularity"], "duration_ms": old_track["duration_ms"],
+             "name": old_track["name"], "external_ids": old_track["external_ids"], "explicit": old_track["explicit"]}
+
+    artists = []
+    for old_artist in old_track["artists"]:
+        artists.append(clean_artist(old_artist))
+
+    track["artists"] = artists
+    album_artists = []
+    for old_artist in old_track["album"]["artists"]:
+        album_artists.append(clean_artist(old_artist))
+
+    track["album"] = {
+        "name": old_track["album"]["name"],
+        "id": old_track["album"]["id"],
+        "artists": album_artists
+    }
+
+    return track
 
 
 def remove_tracks_before_inc(tracks, stop_at_track):
@@ -42,7 +73,7 @@ def remove_tracks_before_inc(tracks, stop_at_track):
         new.append(track)
 
     logging.info("Found all new tracks. Initial = {}, New = {}, Filterd = {}"
-        .format(len(tracks), len(new), len(tracks) - len(new)))
+                 .format(len(tracks), len(new), len(tracks) - len(new)))
 
     return new
 
