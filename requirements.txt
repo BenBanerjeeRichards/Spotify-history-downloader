@@ -1,0 +1,6 @@
+psutil
+pymongo
+bottle
+matplotlib
+pytz
+
