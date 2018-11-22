@@ -6,5 +6,5 @@ out.csv
 download
 import.json
 *.pyc
-*.txt
 spotify.sh
+config.yml
