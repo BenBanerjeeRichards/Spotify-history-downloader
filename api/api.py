@@ -63,6 +63,8 @@ def format_ms(ms):
 
 
 def main():
+    run(host="206.189.24.92", port=9876, server='python_server')
+    return
     if len(sys.argv) != 2:
         print("Pass either DEV or PROD")
         return
@@ -70,7 +72,7 @@ def main():
     if sys.argv[1] == "DEV":
         run(host="localhost", port=8080)
     elif sys.argv[1] == "PROD":
-        run(host="206.189.24.92", port=9876)
+        run(host="206.189.24.92", port=9876, server='python_server')
     else:
         print("Provide PROD or DEV")
 
