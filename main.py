@@ -99,8 +99,6 @@ def main():
     logging.getLogger().addHandler(logging.StreamHandler())
     logging.getLogger().setLevel(logging.DEBUG)
 
-    logging.info("HELLO THERE")
-
     creds = get_credentials()
     j = get_recently_played(creds)
     insert(j["items"])

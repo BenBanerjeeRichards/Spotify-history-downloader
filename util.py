@@ -18,10 +18,16 @@ def datetimes_equal(dt1: datetime.datetime, dt2: datetime.datetime) -> bool:
 
 
 def get_spotify_db():
-    cfg = config()["db"]
+    mongo_un_key = "SPOTIFY_MONGO_USERNAME"
+    mongo_pass_key = "SPOTIFY_MONGO_PASSWORD"
 
-    client = pymongo.MongoClient(cfg["host"], cfg["port"])  # Same in prod
-    return client.spotify
+    cfg = config()["db"]
+    if mongo_un_key in os.environ and mongo_pass_key in os.environ:
+        logging.debug("Getting db with username and password")
+        return pymongo.MongoClient(
+            "mongodb://{}:{}@{}:{}".format(os.environ[mongo_un_key], os.environ[mongo_pass_key], cfg["host"], cfg["port"])).spotify
+
+    return pymongo.MongoClient(cfg["host"], cfg["port"]).spotify
 
 
 def config():
@@ -60,7 +66,7 @@ def percent(a: int, b: int) -> int:
     return int((a / b) * 100)
 
 
-def tracks_within_dates(db, start:datetime.datetime, end:datetime.datetime):
+def tracks_within_dates(db, start: datetime.datetime, end: datetime.datetime):
     if start and end:
         return db.tracks.find({
             "played_at": {
@@ -95,6 +101,4 @@ def track_frequency(tracks: [object], reverse=True) -> [(str, int)]:
         else:
             freq[t_id] = 1
 
-    return sorted(freq.items(), key=lambda x:x[1], reverse=reverse)
-
-
+    return sorted(freq.items(), key=lambda x: x[1], reverse=reverse)
