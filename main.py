@@ -1,5 +1,6 @@
 import pymongo
 import read
+import csv
 from spotify import *
 import dateutil.parser
 import util
@@ -23,7 +24,6 @@ def insert(tracks):
     for track in tracks:
         track["played_at"] = dateutil.parser.parse(track["played_at"])
         track["track"] = clean_track(track["track"])
-
 
     if latest_track:
         tracks = remove_tracks_before_inc(tracks, latest_track)
@@ -85,6 +85,22 @@ def pretty_recently_played_json(tracks):
     return s
 
 
+# Export album art to csv file (link album id -> largest album art link)
+def export_album_art():
+    db = util.get_spotify_db()
+    mappings = []
+    for album in db.albums.find({}):
+        images = album["images"]
+        if len(images) > 0:
+            mappings.append((album["id"], images[0]["url"]))
+        else:
+            logging.info("No album art found for album {}".format(album["name"]))
+
+    with open("upload/art.csv", "w+") as f:
+        writer = csv.writer(f)
+        writer.writerows(mappings)
+
+
 def main():
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
@@ -110,9 +126,11 @@ def main():
     analysis.gen_events.refresh_events(util.get_spotify_db())
 
     # Update sounds goodpy
-    scripts.sounds_good.run_sounds_good()
+    # Disabled as I'm not using this right now
+    # scripts.sounds_good.run_sounds_good()
 
     # Backup
+    export_album_art()
     run_export()
 
 
