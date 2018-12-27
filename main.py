@@ -5,6 +5,7 @@ from spotify import *
 import dateutil.parser
 import util
 import analysis.gen_events
+import sys
 import scripts.sounds_good
 from upload.upload import run_export
 
@@ -96,7 +97,9 @@ def export_album_art():
         else:
             logging.info("No album art found for album {}".format(album["name"]))
 
-    with open("upload/art.csv", "w+") as f:
+    dir = os.path.dirname(sys.argv[0])
+
+    with open("{}/upload/art.csv".format(dir), "w+") as f:
         writer = csv.writer(f)
         writer.writerows(mappings)
 
