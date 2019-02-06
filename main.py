@@ -103,13 +103,13 @@ def export_album_art():
 
     dir = util.config()["upload"]["cwd"]
 
-    with open("{}/upload/art.csv".format(dir), "w+") as f:
+    with open("{}/art.csv".format(dir), "w+") as f:
         writer = csv.writer(f)
         writer.writerows(mappings_large)
-    with open("{}/upload/art-medium.csv".format(dir), "w+") as f:
+    with open("{}/art-medium.csv".format(dir), "w+") as f:
         writer = csv.writer(f)
         writer.writerows(mappings_med)
-    with open("{}/upload/art-small.csv".format(dir), "w+") as f:
+    with open("{}/art-small.csv".format(dir), "w+") as f:
         writer = csv.writer(f)
         writer.writerows(mappings_small)
 
