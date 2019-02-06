@@ -101,7 +101,7 @@ def export_album_art():
         else:
             logging.info("No album art found for album {}".format(album["name"]))
 
-    dir = os.path.dirname(sys.argv[0])
+    dir = util.config()["upload"]["cwd"]
 
     with open("{}/upload/art.csv".format(dir), "w+") as f:
         writer = csv.writer(f)
