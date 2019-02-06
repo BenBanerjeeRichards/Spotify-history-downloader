@@ -89,11 +89,15 @@ def pretty_recently_played_json(tracks):
 # Export album art to csv file (link album id -> largest album art link)
 def export_album_art():
     db = util.get_spotify_db()
-    mappings = []
+    mappings_large = []
+    mappings_med = []
+    mappings_small = []
     for album in db.albums.find({}):
         images = album["images"]
-        if len(images) > 0:
-            mappings.append((album["id"], images[0]["url"]))
+        if images is not None and len(images) == 3:
+            mappings_large.append((album["id"], images[0]["url"]))
+            mappings_med.append((album["id"], images[1]["url"]))
+            mappings_small.append((album["id"], images[2]["url"]))
         else:
             logging.info("No album art found for album {}".format(album["name"]))
 
@@ -101,7 +105,13 @@ def export_album_art():
 
     with open("{}/upload/art.csv".format(dir), "w+") as f:
         writer = csv.writer(f)
-        writer.writerows(mappings)
+        writer.writerows(mappings_large)
+    with open("{}/upload/art-medium.csv".format(dir), "w+") as f:
+        writer = csv.writer(f)
+        writer.writerows(mappings_med)
+    with open("{}/upload/art-small.csv".format(dir), "w+") as f:
+        writer = csv.writer(f)
+        writer.writerows(mappings_small)
 
 
 def main():
