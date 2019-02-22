@@ -243,7 +243,7 @@ def refresh_events(spotify):
         initial_state = {"state": {}}
 
     logging.info("Initial state for event gen: {}".format(initial_state.__str__()))
-    logging.info("Num states to process = {}".format(states.count()))
+    logging.info("Num states to process = {}".format(len(states)))
     new_events = gen_events(initial_state, states)
     logging.info("Generated {} new events".format(len(new_events)))
 

@@ -1,6 +1,7 @@
 db:
   host: localhost
   port: 27017
+  sqlite_file: db.sqlite
 
 player:
   # Number of times to poll player api per second. If set too high (around 10) rate limits will start to apply

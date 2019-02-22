@@ -112,6 +112,7 @@ def run():
 def main():
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger().addHandler(logging.StreamHandler())
 
     try:
         run()
