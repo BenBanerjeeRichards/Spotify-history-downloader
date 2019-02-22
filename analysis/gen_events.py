@@ -4,6 +4,7 @@ import datetime
 import sys
 import read
 import util
+import db.player_store as player_store
 
 # If we move onto next song 100 * SKIP_THRESH % way through
 # then don't consider it a skip
@@ -189,31 +190,6 @@ def add_info_to_events():
     logging.info("Finished adding info to prev track events")
 
 
-def fix_duration():
-    spotify = util.get_spotify_db()
-
-    query = {
-        "duration_ms": {"$exists": False},
-        "track_id": {"$exists": True}
-    }
-
-    track = spotify.player.find_one(query);
-    done = 0
-
-    while track:
-        t_id = track["track_id"]
-        duration = spotify.full_tracks.find_one({"id": t_id})["duration_ms"]
-
-        res = spotify.player.update_many(
-            {"track_id": t_id},
-            {"$set": {"duration_ms": duration}
-             })
-
-        done += res.modified_count
-        print("Updated {}, cumulative total = {}".format(res.modified_count, done))
-
-        track = spotify.player.find_one(query)
-
 
 def add_prev_track_id():
     spotify = util.get_spotify_db()
@@ -258,12 +234,12 @@ def refresh_events(spotify):
 
     if events.count() > 0:
         after = events[0]["timestamp"]
-        states = spotify.player.find({"timestamp": {"$gt": after}}, sort=[("timestamp", pymongo.ASCENDING)])
+        states = player_store.store().player_states_after_time_asc(after)
         logging.info("Processing events after {}({})".format(after, unix_to_iso(after)))
         initial_state = events[0]
     else:
         logging.info("Processing all events (no existing events)")
-        states = spotify.player.find(sort=[("timestamp", pymongo.ASCENDING)])
+        states = player_store.store().player_get_states_asc_timestamp()
         initial_state = {"state": {}}
 
     logging.info("Initial state for event gen: {}".format(initial_state.__str__()))
@@ -279,6 +255,7 @@ def refresh_events(spotify):
     read.update_full_tracks()
     add_info_to_events()
     logging.info("Done processing events")
+
 
 def main():
     spotify = util.get_spotify_db()

@@ -4,7 +4,7 @@ import pymongo
 from spotify import *
 import sys
 import util
-
+import db.player_store
 
 def basic():
     spotify = util.get_spotify_db()
@@ -81,7 +81,7 @@ def get_unknown_track_ids():
 
     # Ids from player database
     # If never played for > 30 secs then doesn't exist in tracks collection
-    player_ids = spotify.player.find().distinct("track_id")
+    player_ids = db.player_store.store().player_distinct_track_ids()
     track_ids = spotify.tracks.find().distinct("track.id")
 
     # Combine and remove duplicates

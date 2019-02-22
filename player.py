@@ -1,6 +1,6 @@
 import time
-
 import logging
+import db.player_store as player_store
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
@@ -50,8 +50,7 @@ def get_player_state(creds):
 
 def store_player_states(states):
     start = time.time()
-    spotify = util.get_spotify_db()
-    spotify.player.insert_many(states)
+    player_store.store().store_states(states)
     logging.debug("[INSERT] Inserted {} states in {}".format(len(states), time.time() - start))
 
 
