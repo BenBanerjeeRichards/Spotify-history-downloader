@@ -59,7 +59,9 @@ class Sqlite3Store:
         res = self.conn.execute("select track_id from player")
         ids = []
         for item in res.fetchall():
-            ids.append(item[0])
+            # If we got an empty request
+            if item[0] is not None:
+                ids.append(item[0])
 
         return list(set(ids))
 
@@ -79,7 +81,7 @@ class Sqlite3Store:
         return jsons
 
     def _tuple_to_json(self, tuple):
-        return {
+        return self._remove_nulls({
             "timestamp": tuple[0],
             "api_timestamp": tuple[1],
             "track_id": tuple[2],
@@ -96,8 +98,19 @@ class Sqlite3Store:
                 "type": tuple[12],
                 "name": tuple[13],
             }
-        }
+        })
 
+    def _remove_nulls(self, hm: Dict):
+        keys = hm.keys()
+        to_remove = []
+        for k in keys:
+            if hm[k] is None:
+                to_remove.append(k)
+
+        for k in to_remove:
+            del hm[k]
+
+        return hm
     def _state_to_tuple(self, state):
         # Convert to tuple used by sqlite
         return (
