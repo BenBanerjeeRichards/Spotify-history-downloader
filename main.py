@@ -118,7 +118,7 @@ def main():
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.DEBUG,
-        datefmt='%Y-%m-%d %H:%M:%S', filename='output.log')
+        datefmt='%Y-%m-%d %H:%M:%S', filename='spotify-downloader.log')
 
     # Disable logging we don't need
     # O/W we end up with GBs of logs in just 24 hours
