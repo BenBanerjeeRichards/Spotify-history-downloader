@@ -67,6 +67,8 @@ def spotify_multiple_req(url, ids, creds, extract_list, max_ids=20, sleep_ms=0):
     ids = list(set(ids))  # don't make duplicate requests
 
     for id_list in chunks(ids, max_ids):
+        print(id_list)
+        print(len(id_list))
         res = requests.get(url, params={"ids": ",".join(id_list)}, headers=head)
         new_albums = extract_list(res.json())
         data = data + new_albums
@@ -81,7 +83,6 @@ def spotify_multiple_req(url, ids, creds, extract_list, max_ids=20, sleep_ms=0):
 
 def get_albums(ids, creds, sleep=0):
     def extract(j):
-        print(j)
         return j["albums"]
 
     return spotify_multiple_req("https://api.spotify.com/v1/albums", ids, creds, extract,sleep)
