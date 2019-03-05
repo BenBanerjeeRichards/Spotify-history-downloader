@@ -173,7 +173,9 @@ def main():
     db = DbStore()
 
     creds = get_credentials()
+    logging.info("updating tracks")
     update_tracks(db, creds)
+    print("done")
     update_artists(db, creds)
     update_albums(db, creds)
 
