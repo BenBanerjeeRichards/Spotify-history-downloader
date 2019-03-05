@@ -157,13 +157,6 @@ def main():
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S', filename='spotify-downloader.log')
 
-    import_from_mongo()
-    db = DbStore()
-    creds = get_credentials()
-    update_tracks(db, creds)
-    update_artists(db, creds)
-    update_albums(db, creds)
-    return
     # Disable logging we don't need
     # O/W we end up with GBs of logs in just 24 hours
     # (mainly thanks to player state requests, of which there are thousands of)
