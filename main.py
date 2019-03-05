@@ -13,6 +13,8 @@ class DownloadException(Exception):
     pass
 
 
+UPDATE_SLEEP_MS = 50
+
 def insert(tracks):
     db = DbStore()
 
@@ -110,8 +112,8 @@ def export_album_art():
 
 def update_tracks(db: DbStore, creds: Credentials):
     track_ids = db.incomplete_track_ids()
-    full_tracks = get_tracks(track_ids, creds)
-    features = get_track_features(track_ids, creds)
+    full_tracks = get_tracks(track_ids, creds, UPDATE_SLEEP_MS)
+    features = get_track_features(track_ids, creds, UPDATE_SLEEP_MS)
     logging.info("Found {} tracks to update".format(len(track_ids)))
 
     for i, track in enumerate(full_tracks):
@@ -126,14 +128,14 @@ def update_tracks(db: DbStore, creds: Credentials):
 
 def update_artists(db: DbStore, creds: Credentials):
     artist_ids = db.incomplete_artist_ids()
-    full_artists = get_artists(artist_ids, creds)
+    full_artists = get_artists(artist_ids, creds, UPDATE_SLEEP_MS)
     for artist in full_artists:
         db.update_full_artist(artist["id"], artist["popularity"], artist["followers"]["total"], artist["genres"])
 
 
 def update_albums(db: DbStore, creds: Credentials):
     album_ids = db.incomplete_album_ids()
-    full_albums = get_albums(album_ids, creds)
+    full_albums = get_albums(album_ids, creds, UPDATE_SLEEP_MS)
     for album in full_albums:
         db.update_full_album(album["id"], album["release_date_precision"], album["release_date"], album["type"],
                              album["images"][0]["url"], album["images"][1]["url"], album["images"][2]["url"],
@@ -175,7 +177,6 @@ def main():
     creds = get_credentials()
     logging.info("updating tracks")
     update_tracks(db, creds)
-    print("done")
     update_artists(db, creds)
     update_albums(db, creds)
 

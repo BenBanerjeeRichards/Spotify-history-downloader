@@ -4,7 +4,7 @@ import time
 import json
 import requests
 from http import HTTPStatus
-
+import time
 
 class Credentials:
     def __init__(self, client_id, client_secret, refresh):
@@ -61,7 +61,7 @@ def chunks(l, n):
     return (l[i:i + n] for i in range(0, len(l), n))
 
 
-def spotify_multiple_req(url, ids, creds, extract_list, max_ids=20):
+def spotify_multiple_req(url, ids, creds, extract_list, max_ids=20, sleep_ms=0):
     data = []
     head = {"Authorization": "Bearer {}".format(creds.access_token)}
     ids = list(set(ids))  # don't make duplicate requests
@@ -72,21 +72,25 @@ def spotify_multiple_req(url, ids, creds, extract_list, max_ids=20):
         data = data + new_albums
         logging.info("Got {}".format(len(new_albums)))
 
+        # Helps with rate limiting
+        if sleep_ms > 0:
+            time.sleep(sleep_ms / 1000)
+
     return data
 
 
-def get_albums(ids, creds):
+def get_albums(ids, creds, sleep=0):
     def extract(j):
         return j["albums"]
 
-    return spotify_multiple_req("https://api.spotify.com/v1/albums", ids, creds, extract)
+    return spotify_multiple_req("https://api.spotify.com/v1/albums", ids, creds, extract,sleep)
 
 
-def get_artists(ids, creds):
+def get_artists(ids, creds, sleep=0):
     def extract(j):
         return j["artists"]
 
-    return spotify_multiple_req("https://api.spotify.com/v1/artists", ids, creds, extract)
+    return spotify_multiple_req("https://api.spotify.com/v1/artists", ids, creds, extract, sleep)
 
 
 def search(query, type, type_key, creds):
@@ -95,18 +99,18 @@ def search(query, type, type_key, creds):
     return res.json()[type_key]["items"]
 
 
-def get_track_features(ids, creds):
+def get_track_features(ids, creds, sleep=0):
     def extract(j):
         return j["audio_features"]
 
-    return spotify_multiple_req("https://api.spotify.com/v1/audio-features", ids, creds, extract, 100)
+    return spotify_multiple_req("https://api.spotify.com/v1/audio-features", ids, creds, extract, 100, sleep)
 
 
-def get_tracks(ids, creds):
+def get_tracks(ids, creds, sleep=0):
     def extract(j):
         return j["tracks"]
 
-    return spotify_multiple_req("https://api.spotify.com/v1/tracks", ids, creds, extract, 50)
+    return spotify_multiple_req("https://api.spotify.com/v1/tracks", ids, creds, extract, 50, sleep)
 
 
 def get_current_playback(creds):
