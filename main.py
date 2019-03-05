@@ -112,6 +112,7 @@ def update_tracks(db: DbStore, creds: Credentials):
     track_ids = db.incomplete_track_ids()
     full_tracks = get_tracks(track_ids, creds)
     features = get_track_features(track_ids, creds)
+    logging.info("Found {} tracks to update".format(len(track_ids)))
 
     for i, track in enumerate(full_tracks):
         feature = features[i]
