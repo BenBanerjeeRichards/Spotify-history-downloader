@@ -164,7 +164,7 @@ def main():
     update_artists(db, creds)
     update_albums(db, creds)
     return
-# Disable logging we don't need
+    # Disable logging we don't need
     # O/W we end up with GBs of logs in just 24 hours
     # (mainly thanks to player state requests, of which there are thousands of)
     logging.getLogger("requests").setLevel(logging.WARNING)

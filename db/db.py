@@ -160,7 +160,7 @@ class DbStore:
             self.conn.commit()
 
     def exists(self, table, column, value):
-        query = f"select count(*) from {table} where {column} = ?"
+        query = "select count(*) from {} where {} = ?".format(table, column)
         res = self.conn.execute(query, (value,))
         return res.fetchone()[0] > 0
 
