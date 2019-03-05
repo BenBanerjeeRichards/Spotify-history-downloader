@@ -13,3 +13,4 @@ create table if not exists player (
   is_private_session int,
   device_type        text
 );
+
