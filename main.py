@@ -181,7 +181,8 @@ def main():
     update_albums(db, creds)
 
     # Update events
-    analysis.gen_events.refresh_events(util.get_spotify_db())
+    # analysis.gen_events.refresh_events(util.get_spotify_db())
+    # TODO fix this
 
     # Update sounds goodpy
     # Disabled as I'm not using this right now

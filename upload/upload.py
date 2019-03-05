@@ -8,10 +8,10 @@ def run_export():
     cfg = config()
     os.chdir(cfg["upload"]["cwd"])
     # I know should use subprocess
-    os.system("mongoexport --db spotify --collection tracks --out tracks.json")
-    os.system("mongoexport --db spotify --collection events --out events.json")
-    os.system("git add tracks.json events.json art.csv art-small.csv art-medium.csv")
-    os.system("git commit -m \"Data upload at {}\"".format(datetime.datetime.now()))
+    os.system("cp ../main.sqlite main.sqlite")
+    os.system("git add main.sqlite")
+
+    os.system("git commit -m \"Data upload at {}\"".format(datetime.datetime.now().isoformat()))
     os.system("git push -u origin master")
 
 
