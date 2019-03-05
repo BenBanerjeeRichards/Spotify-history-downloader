@@ -1,10 +1,6 @@
-import pymongo
-import read
 import csv
 from spotify import *
-import dateutil.parser
 import util
-import analysis.gen_events
 from upload.upload import run_export
 from db.db import DbStore
 
@@ -14,6 +10,7 @@ class DownloadException(Exception):
 
 
 UPDATE_SLEEP_MS = 50
+
 
 def insert(tracks):
     db = DbStore()
@@ -30,34 +27,6 @@ def insert(tracks):
 
     for track in tracks:
         db.add_play(track)
-
-
-def clean_artist(old_artist):
-    return {"name": old_artist["name"], "id": old_artist["id"]}
-
-
-# Remove items from spotify track object we don't care about
-# Saves space, esp. with file export
-def clean_track(old_track):
-    track = {"id": old_track["id"], "popularity": old_track["popularity"], "duration_ms": old_track["duration_ms"],
-             "name": old_track["name"], "external_ids": old_track["external_ids"], "explicit": old_track["explicit"]}
-
-    artists = []
-    for old_artist in old_track["artists"]:
-        artists.append(clean_artist(old_artist))
-
-    track["artists"] = artists
-    album_artists = []
-    for old_artist in old_track["album"]["artists"]:
-        album_artists.append(clean_artist(old_artist))
-
-    track["album"] = {
-        "name": old_track["album"]["name"],
-        "id": old_track["album"]["id"],
-        "artists": album_artists
-    }
-
-    return track
 
 
 def remove_tracks_before_inc(tracks, stop_at_time):

@@ -167,3 +167,6 @@ class DbStore:
     def most_recent_played_at(self):
         res = self.conn.execute("select played_at from play order by played_at desc limit 1")
         return res.fetchone()[0]
+
+    def get_basic_tracks(self):
+        return self.conn.execute("select played_at, track_name, main_artist_name from play order by played_at asc").fetchall()
