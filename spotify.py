@@ -81,6 +81,7 @@ def spotify_multiple_req(url, ids, creds, extract_list, max_ids=20, sleep_ms=0):
 
 def get_albums(ids, creds, sleep=0):
     def extract(j):
+        print(j)
         return j["albums"]
 
     return spotify_multiple_req("https://api.spotify.com/v1/albums", ids, creds, extract,sleep)
