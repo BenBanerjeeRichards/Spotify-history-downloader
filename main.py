@@ -5,35 +5,29 @@ from spotify import *
 import dateutil.parser
 import util
 import analysis.gen_events
-import sys
-import scripts.sounds_good
 from upload.upload import run_export
+from db.db import DbStore
+
 
 class DownloadException(Exception):
     pass
 
 
 def insert(tracks):
-    spotify = util.get_spotify_db()
+    db = DbStore()
 
     # Get last track listened to stored in db
     # This is to ensure we don't duplicate items in database
-    latest_track = spotify.tracks.find_one({}, sort=[("played_at", pymongo.DESCENDING)])
-    logging.info("Retrieved tracks from spotify, filtering out ones played up to {}".format(latest_track["played_at"]))
-
-    # Properly parse dates and remove stuff we don't care about
-    for track in tracks:
-        track["played_at"] = dateutil.parser.parse(track["played_at"])
-        track["track"] = clean_track(track["track"])
-
-    if latest_track:
-        tracks = remove_tracks_before_inc(tracks, latest_track)
+    latest_track_time = db.most_recent_played_at()
+    logging.info("Retrieved tracks from spotify, filtering out ones played up to {}".format(latest_track_time))
+    if latest_track_time:
+        tracks = remove_tracks_before_inc(tracks, latest_track_time)
         logging.info("Inserting {} tracks".format(len(tracks)))
     else:
         logging.info("Nothing played since last download, doing nothing...")
 
-    if len(tracks) > 0:
-        spotify.tracks.insert_many(tracks)
+    for track in tracks:
+        db.add_play(track)
 
 
 def clean_artist(old_artist):
@@ -64,10 +58,10 @@ def clean_track(old_track):
     return track
 
 
-def remove_tracks_before_inc(tracks, stop_at_track):
+def remove_tracks_before_inc(tracks, stop_at_time):
     new = []
     for track in tracks:
-        if util.datetimes_equal(track["played_at"], stop_at_track["played_at"]):
+        if track["played_at"] == stop_at_time:
             logging.info("Found repeat track, stopping: {}".format(track["played_at"]))
 
             break
@@ -114,13 +108,63 @@ def export_album_art():
         writer.writerows(mappings_small)
 
 
+def update_tracks(db: DbStore, creds: Credentials):
+    track_ids = db.incomplete_track_ids()
+    full_tracks = get_tracks(track_ids, creds)
+    features = get_track_features(track_ids, creds)
+
+    for i, track in enumerate(full_tracks):
+        feature = features[i]
+        db.update_full_track(track["id"], track["track_number"], track["disc_number"], feature["valence"],
+                             feature["tempo"],
+                             feature["danceability"], feature["energy"], feature["instrumentalness"],
+                             feature["speechiness"]
+                             , feature["time_signature"], feature["loudness"], feature["liveness"],
+                             feature["acousticness"])
+
+
+def update_artists(db: DbStore, creds: Credentials):
+    artist_ids = db.incomplete_artist_ids()
+    full_artists = get_artists(artist_ids, creds)
+    for artist in full_artists:
+        db.update_full_artist(artist["id"], artist["popularity"], artist["followers"]["total"], artist["genres"])
+
+
+def update_albums(db: DbStore, creds: Credentials):
+    album_ids = db.incomplete_album_ids()
+    full_albums = get_albums(album_ids, creds)
+    for album in full_albums:
+        db.update_full_album(album["id"], album["release_date_precision"], album["release_date"], album["type"],
+                             album["images"][0]["url"], album["images"][1]["url"], album["images"][2]["url"],
+                             album["label"], album["popularity"], album["genres"])
+
+
+def import_from_mongo():
+    db = DbStore()
+
+    i = 0
+    for track in util.get_spotify_db().tracks.find():
+        db.add_play_from_mongo(track)
+        i += 1
+
+        if i % 100 == 0:
+            print("Added {}".format(i))
+
+
 def main():
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S', filename='spotify-downloader.log')
 
-    # Disable logging we don't need
+    import_from_mongo()
+    db = DbStore()
+    creds = get_credentials()
+    update_tracks(db, creds)
+    update_artists(db, creds)
+    update_albums(db, creds)
+    return
+# Disable logging we don't need
     # O/W we end up with GBs of logs in just 24 hours
     # (mainly thanks to player state requests, of which there are thousands of)
     logging.getLogger("requests").setLevel(logging.WARNING)
@@ -132,8 +176,12 @@ def main():
     j = get_recently_played(creds)
     insert(j["items"])
 
-    # Update stuff
-    read.update()
+    db = DbStore()
+
+    creds = get_credentials()
+    update_tracks(db, creds)
+    update_artists(db, creds)
+    update_albums(db, creds)
 
     # Update events
     analysis.gen_events.refresh_events(util.get_spotify_db())

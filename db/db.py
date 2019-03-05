@@ -1,5 +1,6 @@
 import sqlite3
 import util
+from spotify import Credentials, get_albums
 
 
 class DbStore:
@@ -19,9 +20,7 @@ class DbStore:
         track = play["track"]
         album = track["album"]
 
-        self.add_simple_album(album["id"], album["name"], album["release_date_precision"],
-                              album["release_date"], album["type"], album["images"][0]["url"],
-                              album["images"][1]["url"], album["images"][2]["url"])
+        self.add_simple_album(album["id"], album["name"])
 
         for artist in track["artists"]:
             self.add_simple_artist(artist["id"], artist["name"])
@@ -37,6 +36,13 @@ class DbStore:
         self.conn.execute("insert into play values (?, ?, ?, ?, ?, ?, ?, ?)",
                           (None, play["played_at"], play["track"]["id"], track["name"], album["id"], album["name"],
                            track["artists"][0]["id"], track["artists"][0]["name"]))
+
+    # Used when transferring data over from mongo
+    # Has different format than spotify API
+    def add_play_from_mongo(self, mongo_play):
+        play = {"played_at": mongo_play["played_at"].isoformat(), "track": mongo_play["track"]}
+
+        return self.add_play(play)
 
     def add_simple_track(self, track_id, name, duration_ms, popularity, album_id):
         if self.exists("track", "track_id", track_id):
@@ -110,24 +116,31 @@ class DbStore:
 
         return ids
 
-    def update_full_album(self, album_id, label, popularity, genres):
+    def update_full_album(self, album_id, release_day_precision, release_date, album_type,
+                          artwork_large_url, artwork_medium_url, artwork_small_url, label, popularity, genres):
         self.conn.execute("""
           update album set
+            release_date_precision=?,
+            release_date=?,
+            album_type=?,
+            artwork_large_url=?,
+            artwork_medium_url=?,
+            artwork_small_url=?,
             label=?,
             popularity=?,
             genres=?
           where album_id = ?
-          """, (label, popularity, ",".join(genres), album_id,))
+          """, (release_day_precision, release_date, album_type,
+                artwork_large_url, artwork_medium_url, artwork_small_url, label, popularity, ",".join(genres),
+                album_id,))
         self.conn.commit()
 
-    def add_simple_album(self, album_id, name, release_date_precision, release_date, album_type, artwork_large_url,
-                         artwork_medium_url, artwork_small_url):
+    def add_simple_album(self, album_id, name):
         if self.exists("album", "album_id", album_id):
             return
 
         self.conn.execute("insert into album values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                          (album_id, name, release_date_precision, release_date, album_type, artwork_large_url,
-                           artwork_medium_url, artwork_small_url, None, None, None,))
+                          (album_id, name, None, None, None, None, None, None, None, None, None,))
         self.conn.commit()
 
     def add_album_artist(self, album_id, artist_id):
@@ -150,3 +163,7 @@ class DbStore:
         query = f"select count(*) from {table} where {column} = ?"
         res = self.conn.execute(query, (value,))
         return res.fetchone()[0] > 0
+
+    def most_recent_played_at(self):
+        res = self.conn.execute("select played_at from play order by played_at desc limit 1")
+        return res.fetchone()[0]
