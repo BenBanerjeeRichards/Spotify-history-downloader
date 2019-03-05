@@ -10,7 +10,7 @@ def write_basic_track_file():
     for track in db.get_basic_tracks():
         contents += "{},{},{}\n".format(track[0], track[1],track[2])
 
-    open("tracks.txt", "w+").write(contents)
+    open("upload/tracks.txt", "w+").write(contents)
 
 
 def run_export():
