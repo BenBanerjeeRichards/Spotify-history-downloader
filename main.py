@@ -25,6 +25,9 @@ def insert(tracks):
     else:
         logging.info("Nothing played since last download, doing nothing...")
 
+    logging.info("Would insert {} tracks".format(len(tracks)))
+    return
+
     for track in tracks:
         db.add_play(track)
 
@@ -124,10 +127,14 @@ def import_from_mongo():
 
 
 def main():
+    log_path = 'spotify-downloader.log'
+    if not util.in_dev():
+        log_path = '/root/Spotify-history-downloader/spotify-downloader.log'
+
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.DEBUG,
-        datefmt='%Y-%m-%d %H:%M:%S', filename='spotify-downloader.log')
+        datefmt='%Y-%m-%d %H:%M:%S', filename=log_path)
 
     # Disable logging we don't need
     # O/W we end up with GBs of logs in just 24 hours
@@ -137,29 +144,45 @@ def main():
     logging.getLogger().addHandler(logging.StreamHandler())
     logging.getLogger().setLevel(logging.DEBUG)
 
+    logging.debug("Testing logging.debug")
+    logging.info("Testing logging.info")
+    logging.error("Testing logging.error")
+
+    logging.info("Getting recently played tracks")
     creds = get_credentials()
     j = get_recently_played(creds)
+    for track in j["items"]:
+        print(track["played_at"], track["track"]["name"])
+
+    logging.info("Got {} tracks".format(len(j["items"])))
     insert(j["items"])
 
     db = DbStore()
 
-    creds = get_credentials()
-    logging.info("updating tracks")
+    logging.info("Updating tracks")
     update_tracks(db, creds)
-    update_artists(db, creds)
-    update_albums(db, creds)
 
+    logging.info("Updating artists")
+    update_artists(db, creds)
+
+    logging.info("Updating albums")
+    update_albums(db, creds)
     # Update events
-    # analysis.gen_events.refresh_events(util.get_spotify_db())
     # TODO fix this
+    # analysis.gen_events.refresh_events(util.get_spotify_db())
 
     # Update sounds goodpy
     # Disabled as I'm not using this right now
     # scripts.sounds_good.run_sounds_good()
 
     # Backup
-    export_album_art()
-    run_export()
+    logging.info("Running back up")
+    if not util.in_dev():
+        export_album_art()
+        run_export()
+    else:
+        logging.info("Skipping as in dev")
+    logging.info("Done!")
 
 
 if __name__ == "__main__": main()

@@ -3,9 +3,13 @@ import pymongo
 import yaml
 import os
 import logging
+import sys
 
 CONFIG = None
 
+
+def in_dev():
+    return len(sys.argv) >= 2 and sys.argv[1] == "DEV"
 
 # Compare to second accuracy (never need any better in this application)
 def datetimes_equal(dt1: datetime.datetime, dt2: datetime.datetime) -> bool:
