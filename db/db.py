@@ -1,17 +1,23 @@
 import sqlite3
 import util
-from spotify import Credentials, get_albums
+import logging
 
 
 class DbStore:
 
     def __init__(self):
         cfg = util.config()
+        logging.debug("Got config file")
         self.conn = sqlite3.connect(cfg["db"]["db_sqlite_file"])
-        schema = open("db/db_schema.sql").read()
-        for statement in schema.split(";"):
-            self.conn.execute(statement)
-        self.conn.commit()
+        logging.debug("Got connection to database")
+
+        # schema = open("db/db_schema.sql").read()
+        # logging.debug("Opened schema file {}".format(schema))
+        # for statement in schema.split(";"):
+        #     logging.debug("Executing schema {}".format(schema))
+        #     self.conn.execute(statement)
+        # self.conn.commit()
+        logging.debug("Done!")
 
     # Adds a play event using data from spotify api
     # If needed creates rows in artist, album, ... tables with incomplete information
@@ -169,4 +175,5 @@ class DbStore:
         return res.fetchone()[0]
 
     def get_basic_tracks(self):
-        return self.conn.execute("select played_at, track_name, main_artist_name from play order by played_at asc").fetchall()
+        return self.conn.execute(
+            "select played_at, track_name, main_artist_name from play order by played_at asc").fetchall()

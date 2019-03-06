@@ -64,6 +64,8 @@ def config():
     if CONFIG is None:
         logging.error("No config file found, checked " + str(possible_locations))
 
+    logging.info("Returning {}".format(CONFIG))
+
     return CONFIG
 
 
