@@ -26,7 +26,6 @@ def insert(tracks):
         logging.info("Nothing played since last download, doing nothing...")
 
     logging.info("Would insert {} tracks".format(len(tracks)))
-    return
 
     for track in tracks:
         db.add_play(track)
