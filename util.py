@@ -58,6 +58,7 @@ def config():
         if os.path.isfile(path):
             logging.info("Found at " + path)
             CONFIG = yaml.load(open(path))
+            logging.info("Loaded! {}".format(CONFIG))
             break
 
     if CONFIG is None:
