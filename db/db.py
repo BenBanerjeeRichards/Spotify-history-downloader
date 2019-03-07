@@ -1,14 +1,14 @@
 import sqlite3
 import util
 import logging
-
+import util
 
 class DbStore:
 
     def __init__(self):
         cfg = util.config()
         logging.debug("Got config file")
-        self.conn = sqlite3.connect(cfg["db"]["db_sqlite_file"])
+        self.conn = sqlite3.connect(util.get_path(cfg["db"]["db_sqlite_file"]))
         logging.debug("Got connection to database")
 
         # schema = open("db/db_schema.sql").read()

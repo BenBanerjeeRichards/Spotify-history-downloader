@@ -8,8 +8,13 @@ import sys
 CONFIG = None
 
 
+def get_path(rel_path):
+    return sys.path[0] + "/" + rel_path
+
+
 def in_dev():
     return len(sys.argv) >= 2 and sys.argv[1] == "DEV"
+
 
 # Compare to second accuracy (never need any better in this application)
 def datetimes_equal(dt1: datetime.datetime, dt2: datetime.datetime) -> bool:
@@ -29,7 +34,8 @@ def get_spotify_db():
     if mongo_un_key in os.environ and mongo_pass_key in os.environ:
         logging.debug("Getting db with username and password")
         return pymongo.MongoClient(
-            "mongodb://{}:{}@{}:{}".format(os.environ[mongo_un_key], os.environ[mongo_pass_key], cfg["host"], cfg["port"])).spotify
+            "mongodb://{}:{}@{}:{}".format(os.environ[mongo_un_key], os.environ[mongo_pass_key], cfg["host"],
+                                           cfg["port"])).spotify
 
     return pymongo.MongoClient(cfg["host"], cfg["port"]).spotify
 

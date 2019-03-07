@@ -28,7 +28,7 @@ class Sqlite3Store:
 
     def __init__(self):
         cfg = util.config()
-        self.conn = sqlite3.connect(cfg["db"]["player_sqlite_file"])
+        self.conn = sqlite3.connect(util.get_path(cfg["db"]["player_sqlite_file"]))
         self.conn.execute("""
         create table if not exists player (
           timestamp          int,
