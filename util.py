@@ -59,11 +59,10 @@ def config():
             logging.info("Found at " + path)
             CONFIG = yaml.load(open(path))
             logging.info("Loaded! {}".format(CONFIG))
-            break
+            logging.info("Returning from config {}".format(CONFIG))
+            return CONFIG
 
-    if CONFIG is None:
-        logging.error("No config file found, checked " + str(possible_locations))
-
+    logging.error("No config file found, checked " + str(possible_locations))
     logging.info("Returning {}".format(CONFIG))
 
     return CONFIG
