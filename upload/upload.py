@@ -18,6 +18,7 @@ def run_export():
     cfg = config()
     os.chdir(cfg["upload"]["cwd"])
     # I know should use subprocess
+    os.system("rm main.sqlite")
     os.system("cp ../main.sqlite main.sqlite")
     os.system("git add main.sqlite tracks.txt")
 
