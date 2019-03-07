@@ -36,6 +36,3 @@ sounds_good:
 
 archive_player:
   percent_to_archive: 0.95
-
-upload:
-  cwd: "/root/Spotify-history-downloader/upload"

@@ -1,6 +1,6 @@
 import os
 import datetime
-from util import config
+from util import get_path
 from db.db import DbStore
 
 
@@ -10,13 +10,13 @@ def write_basic_track_file():
     for track in db.get_basic_tracks():
         contents += "{},{},{}\n".format(track[0], track[1],track[2])
 
-    open("upload/tracks.txt", "w+").write(contents)
+    open("tracks.txt", "w+").write(contents)
 
 
 def run_export():
+    os.chdir(get_path("upload"))
     write_basic_track_file()
-    cfg = config()
-    os.chdir(cfg["upload"]["cwd"])
+
     # I know should use subprocess
     os.system("rm main.sqlite")
     os.system("cp ../main.sqlite main.sqlite")
