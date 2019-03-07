@@ -146,6 +146,7 @@ def init_logging():
 
 
 def do_main():
+    init_logging()
     logging.info("Getting recently played tracks")
     creds = get_credentials()
     j = get_recently_played(creds)
