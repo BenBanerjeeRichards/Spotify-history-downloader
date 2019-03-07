@@ -126,7 +126,7 @@ def import_from_mongo():
             print("Added {}".format(i))
 
 
-def main():
+def init_logging():
     log_path = 'spotify-downloader.log'
     if not util.in_dev():
         log_path = '/root/Spotify-history-downloader/spotify-downloader.log'
@@ -144,10 +144,8 @@ def main():
     logging.getLogger().addHandler(logging.StreamHandler())
     logging.getLogger().setLevel(logging.DEBUG)
 
-    logging.debug("Testing logging.debug")
-    logging.info("Testing logging.info")
-    logging.error("Testing logging.error")
 
+def do_main():
     logging.info("Getting recently played tracks")
     creds = get_credentials()
     j = get_recently_played(creds)
@@ -183,6 +181,14 @@ def main():
     else:
         logging.info("Skipping as in dev")
     logging.info("Done!")
+
+
+def main():
+    try:
+        do_main()
+    except Exception as e:
+        logging.exception("An exception occured:")
+        raise e
 
 
 if __name__ == "__main__": main()
