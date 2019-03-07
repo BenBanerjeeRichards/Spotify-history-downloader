@@ -177,6 +177,8 @@ class DbStore:
             res = self.conn.execute("select played_at from play order by played_at desc limit 1")
         except Exception as e:
             logging.info("Error occured")
+            logging.info(e)
+            logging.info(e.args)
 
         logging.info("Got result")
         return res.fetchone()[0]
