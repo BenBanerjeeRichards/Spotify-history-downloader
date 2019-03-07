@@ -126,7 +126,9 @@ def import_from_mongo():
             print("Added {}".format(i))
 
 
-def init_logging():
+
+
+def do_main():
     log_path = 'spotify-downloader.log'
     if not util.in_dev():
         log_path = '/root/Spotify-history-downloader/spotify-downloader.log'
@@ -143,10 +145,6 @@ def init_logging():
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger().addHandler(logging.StreamHandler())
     logging.getLogger().setLevel(logging.DEBUG)
-
-
-def do_main():
-    init_logging()
     logging.info("Getting recently played tracks")
     creds = get_credentials()
     j = get_recently_played(creds)
