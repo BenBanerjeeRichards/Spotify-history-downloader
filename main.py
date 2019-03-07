@@ -14,6 +14,7 @@ UPDATE_SLEEP_MS = 50
 
 def insert(tracks):
     db = DbStore()
+    logging.info("Got db instance")
 
     # Get last track listened to stored in db
     # This is to ensure we don't duplicate items in database
