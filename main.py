@@ -69,15 +69,13 @@ def export_album_art():
         else:
             logging.info("No album art found for album {}".format(album["name"]))
 
-    dir = util.config()["upload"]["cwd"]
-
-    with open("{}/art.csv".format(dir), "w+") as f:
+    with open(util.get_path("upload/art.csv"), "w+") as f:
         writer = csv.writer(f)
         writer.writerows(mappings_large)
-    with open("{}/art-medium.csv".format(dir), "w+") as f:
+    with open(util.get_path("upload/art-medium.csv"), "w+") as f:
         writer = csv.writer(f)
         writer.writerows(mappings_med)
-    with open("{}/art-small.csv".format(dir), "w+") as f:
+    with open(util.get_path("upload/art-small.csv"), "w+") as f:
         writer = csv.writer(f)
         writer.writerows(mappings_small)
 
