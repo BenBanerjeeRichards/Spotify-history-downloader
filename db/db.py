@@ -173,11 +173,12 @@ class DbStore:
     def most_recent_played_at(self):
         logging.info("most_recently_played_at")
         logging.info(self.conn.__str__())
-        res = self.conn.execute("select played_at from play order by played_at desc limit 1")
+        res = self.conn.execute("select played_at from play order by played_at desc limit 1").fetchall()
         logging.info("Got result")
-        if res.fetchone() is None:
+
+        if len(res) == 0:
             return ""
-        return res.fetchone()[0]
+        return res[0][0]
 
     def get_basic_tracks(self):
         return self.conn.execute(
