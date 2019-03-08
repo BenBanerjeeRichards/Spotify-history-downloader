@@ -11,12 +11,12 @@ class DbStore:
         self.conn = sqlite3.connect(util.get_path(cfg["db"]["db_sqlite_file"]))
         logging.debug("Got connection to database")
 
-        # schema = open("db/db_schema.sql").read()
-        # logging.debug("Opened schema file {}".format(schema))
-        # for statement in schema.split(";"):
-        #     logging.debug("Executing schema {}".format(schema))
-        #     self.conn.execute(statement)
-        # self.conn.commit()
+        schema = open(util.get_path("db/db_schema.sql")).read()
+        logging.debug("Opened schema file {}".format(schema))
+        for statement in schema.split(";"):
+            logging.debug("Executing schema {}".format(schema))
+            self.conn.execute(statement)
+        self.conn.commit()
         logging.debug("Done!")
 
     # Adds a play event using data from spotify api
