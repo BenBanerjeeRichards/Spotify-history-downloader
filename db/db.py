@@ -175,6 +175,8 @@ class DbStore:
         logging.info(self.conn.__str__())
         res = self.conn.execute("select played_at from play order by played_at desc limit 1")
         logging.info("Got result")
+        if res.fetchone() is None:
+            return ""
         return res.fetchone()[0]
 
     def get_basic_tracks(self):
