@@ -1,4 +1,3 @@
-import requests
 import webbrowser
 from random import randint
 from bottle import route, request, run
@@ -36,11 +35,15 @@ def spotify():
         return "Failed"
 
     refresh_token = res.json()["refresh_token"]
-    return {
-        "refresh_token": refresh_token,
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET
-    }
+    template = """
+        <pre>
+export SPOTIFY_CLIENT_ID={}
+export SPOTIFY_CLIENT_SECRET={}
+export SPOTIFY_REFRESH_TOKEN={}
+        </pre>
+    """
+
+    return template.format(refresh_token, CLIENT_ID, CLIENT_SECRET)
 
 
 def main():
