@@ -43,7 +43,7 @@ export SPOTIFY_REFRESH_TOKEN={}
         </pre>
     """
 
-    return template.format(refresh_token, CLIENT_ID, CLIENT_SECRET)
+    return template.format(CLIENT_ID, CLIENT_SECRET, refresh_token)
 
 
 def main():
