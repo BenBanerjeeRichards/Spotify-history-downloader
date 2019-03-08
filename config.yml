@@ -13,7 +13,7 @@ player:
   batch_size_insert: 100
 
 gen_events:
-  enable: true
+  enable: false
   # If less than this percent (0-1) at end of song then generate skip
   skip_thresh: 0.95
   # Length of jump in playback of a song to generate a seek event
@@ -39,4 +39,4 @@ archive_player:
   percent_to_archive: 0.95
 
 export:
-  enable: true
+  enable: false
