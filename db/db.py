@@ -7,7 +7,6 @@ class DbStore:
 
     def __init__(self):
         cfg = util.config()
-        logging.debug("Got config file")
         self.conn = sqlite3.connect(util.get_path(cfg["db"]["db_sqlite_file"]))
         logging.debug("Got connection to database")
 
@@ -171,10 +170,7 @@ class DbStore:
         return res.fetchone()[0] > 0
 
     def most_recent_played_at(self):
-        logging.info("most_recently_played_at")
-        logging.info(self.conn.__str__())
         res = self.conn.execute("select played_at from play order by played_at desc limit 1").fetchall()
-        logging.info("Got result")
 
         if len(res) == 0:
             return ""

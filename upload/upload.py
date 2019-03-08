@@ -17,6 +17,9 @@ def write_basic_track_file():
 def run_export():
     if not config()["export"]["enable"]:
         logging.info("Export disabled, not running...")
+        return
+
+    logging.info("Enabled, running yoyoyo okokokok")
 
     os.chdir(get_path("upload"))
 
