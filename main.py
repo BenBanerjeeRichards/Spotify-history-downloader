@@ -3,7 +3,7 @@ from spotify import *
 import util
 from upload.upload import run_export, write_basic_track_file
 from db.db import DbStore
-
+from analysis import gen_events
 
 class DownloadException(Exception):
     pass
@@ -162,21 +162,16 @@ def do_main():
 
     logging.info("Updating albums")
     update_albums(db, creds)
+
     # Update events
     # TODO fix this
-    # analysis.gen_events.refresh_events(util.get_spotify_db())
+    gen_events.refresh_events(util.get_spotify_db())
 
     # Update sounds goodpy
     # Disabled as I'm not using this right now
     # scripts.sounds_good.run_sounds_good()
 
     # Backup
-    logging.info("Running back up")
-    if not util.in_dev():
-        export_album_art()
-        run_export()
-    else:
-        logging.info("Skipping as in dev")
     logging.info("Done!")
 
 
