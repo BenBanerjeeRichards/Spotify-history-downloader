@@ -92,14 +92,10 @@ def import_from_mongo():
 
 
 def do_main():
-    log_path = 'spotify-downloader.log'
-    if not util.in_dev():
-        log_path = '/root/Spotify-history-downloader/spotify-downloader.log'
-
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.DEBUG,
-        datefmt='%Y-%m-%d %H:%M:%S', filename=log_path)
+        datefmt='%Y-%m-%d %H:%M:%S', filename=util.get_path("spotify-downloader.log"))
 
     # Disable logging we don't need
     # O/W we end up with GBs of logs in just 24 hours
@@ -129,12 +125,7 @@ def do_main():
     update_albums(db, creds)
 
     # Update events
-    # TODO fix this
     gen_events.refresh_events(util.get_spotify_db())
-
-    # Update sounds goodpy
-    # Disabled as I'm not using this right now
-    # scripts.sounds_good.run_sounds_good()
 
     # Backup
     run_export()

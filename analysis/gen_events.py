@@ -155,7 +155,8 @@ def add_info_to_events():
     track_cache = {}
 
     events_without_track = spotify.events.find({"state.track_id": {"$exists": True}, "track": {"$exists": False}})
-    events_without_prev_track = spotify.events.find({"prev_track_id": {"$exists": True}, "prev_track": {"$exists": False}})
+    events_without_prev_track = spotify.events.find(
+        {"prev_track_id": {"$exists": True}, "prev_track": {"$exists": False}})
 
     logging.info("Found {} without track, {} without prev track"
                  .format(events_without_track.count(), events_without_prev_track.count()))
@@ -188,7 +189,6 @@ def add_info_to_events():
              })
 
     logging.info("Finished adding info to prev track events")
-
 
 
 def add_prev_track_id():
@@ -229,6 +229,11 @@ def print_events(events):
 
 
 def refresh_events(spotify):
+    config = util.config()["gen_events"]
+    if not config["enable"]:
+        logging.info("Skipping events as gen_events disbled")
+        return
+
     events = spotify.events.find({}, sort=[("timestamp", pymongo.DESCENDING)])
     logging.info("Refreshing events")
 

@@ -3,4 +3,6 @@ pymongo
 bottle
 matplotlib
 pytz
-
+requests
+pyyaml
+bottle
