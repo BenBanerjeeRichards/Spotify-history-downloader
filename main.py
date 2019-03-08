@@ -1,9 +1,9 @@
-import csv
 from spotify import *
 import util
 from upload.upload import run_export, write_basic_track_file
 from db.db import DbStore
 from analysis import gen_events
+
 
 class DownloadException(Exception):
     pass
@@ -45,39 +45,6 @@ def remove_tracks_before_inc(tracks, stop_at_time):
                  .format(len(tracks), len(new), len(tracks) - len(new)))
 
     return new
-
-
-def pretty_recently_played_json(tracks):
-    s = ""
-    for item in tracks:
-        s += "{} - {}\n".format(item["track"]["artists"][0]["name"], item["track"]["name"])
-    return s
-
-
-# Export album art to csv file (link album id -> largest album art link)
-def export_album_art():
-    db = util.get_spotify_db()
-    mappings_large = []
-    mappings_med = []
-    mappings_small = []
-    for album in db.albums.find({}):
-        images = album["images"]
-        if images is not None and len(images) == 3:
-            mappings_large.append((album["id"], images[0]["url"]))
-            mappings_med.append((album["id"], images[1]["url"]))
-            mappings_small.append((album["id"], images[2]["url"]))
-        else:
-            logging.info("No album art found for album {}".format(album["name"]))
-
-    with open(util.get_path("upload/art.csv"), "w+") as f:
-        writer = csv.writer(f)
-        writer.writerows(mappings_large)
-    with open(util.get_path("upload/art-medium.csv"), "w+") as f:
-        writer = csv.writer(f)
-        writer.writerows(mappings_med)
-    with open(util.get_path("upload/art-small.csv"), "w+") as f:
-        writer = csv.writer(f)
-        writer.writerows(mappings_small)
 
 
 def update_tracks(db: DbStore, creds: Credentials):
@@ -122,8 +89,6 @@ def import_from_mongo():
 
         if i % 100 == 0:
             print("Added {}".format(i))
-
-
 
 
 def do_main():
@@ -172,6 +137,7 @@ def do_main():
     # scripts.sounds_good.run_sounds_good()
 
     # Backup
+    run_export()
     logging.info("Done!")
 
 

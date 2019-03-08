@@ -2,7 +2,7 @@ import os
 import datetime
 from util import get_path
 from db.db import DbStore
-
+import logging
 
 def write_basic_track_file():
     db = DbStore()
@@ -15,15 +15,24 @@ def write_basic_track_file():
 
 def run_export():
     os.chdir(get_path("upload"))
+
+    prev_tracks = ""
+    if os.path.exists("tracks.txt"):
+        prev_tracks = open("tracks.txt", "r").read()
+
     write_basic_track_file()
 
-    # I know should use subprocess
-    os.system("rm main.sqlite")
-    os.system("cp ../main.sqlite main.sqlite")
-    os.system("git add main.sqlite tracks.txt")
+    if open("tracks.txt", "r").read() != prev_tracks:
+        logging.info("tracks.txt changed so reuploading to github")
+        # I know should use subprocess
+        os.system("rm main.sqlite")
+        os.system("cp ../main.sqlite main.sqlite")
+        os.system("git add main.sqlite tracks.txt")
 
-    os.system("git commit -m \"Data upload at {}\"".format(datetime.datetime.now().isoformat()))
-    os.system("git push -u origin master")
+        os.system("git commit -m \"Data upload at {}\"".format(datetime.datetime.now().isoformat()))
+        os.system("git push -u origin master")
+    else:
+        logging.info("tracks.txt the same, no new music to upload")
 
 
 if __name__ == '__main__':
