@@ -26,3 +26,15 @@ def import_context_from_mongo():
             print("Added {}".format(i))
 
     db.conn.commit()
+
+
+def move_events():
+    db = DbStore()
+    total = util.get_spotify_db().events.find().count()
+    for i, event in enumerate(util.get_spotify_db().events.find()):
+        if i % 100 == 0:
+            print("Moving events {}%".format(util.percent(i, total)))
+
+        db.add_event(event)
+    db.commit()
+

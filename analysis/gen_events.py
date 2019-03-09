@@ -5,6 +5,7 @@ import sys
 import read
 import util
 import db.player_store as player_store
+from db.db import DbStore
 
 # If we move onto next song 100 * SKIP_THRESH % way through
 # then don't consider it a skip
@@ -191,9 +192,8 @@ def add_info_to_events():
     logging.info("Finished adding info to prev track events")
 
 
-def add_prev_track_id():
-    spotify = util.get_spotify_db()
-    events = spotify.events.find({"state.track_id": {"$exists": True}})
+def add_prev_track_id(db: DbStore):
+    events = db.events_with_track_id()
     prev_track_id = events[0]["state"]["track_id"]
 
     n_updated = 0
@@ -201,10 +201,11 @@ def add_prev_track_id():
         track_id = event["state"]["track_id"]
         if track_id != prev_track_id and event.get("prev_track_id") != prev_track_id:
             n_updated += 1
-            spotify.events.update({"_id": event["_id"]}, {"$set": {"prev_track_id": prev_track_id}})
+            db.set_prev_track_id(event["state"]["timestamp"], prev_track_id)
 
         prev_track_id = track_id
 
+    db.commit()
     logging.info("Added prev track info to {} items".format(n_updated))
 
 
@@ -228,20 +229,21 @@ def print_events(events):
         print()
 
 
-def refresh_events(spotify):
+def refresh_events(db: DbStore):
     config = util.config()["gen_events"]
     if not config["enable"]:
         logging.info("Skipping events as gen_events disbled")
         return
 
-    events = spotify.events.find({}, sort=[("timestamp", pymongo.DESCENDING)])
     logging.info("Refreshing events")
 
-    if events.count() > 0:
-        after = events[0]["timestamp"]
+    last_event = db.latest_event()
+
+    if last_event is not None:
+        after = last_event["timestamp"]
         states = player_store.store().player_states_after_time_asc(after)
         logging.info("Processing events after {}({})".format(after, unix_to_iso(after)))
-        initial_state = events[0]
+        initial_state = last_event
     else:
         logging.info("Processing all events (no existing events)")
         states = player_store.store().player_get_states_asc_timestamp()
@@ -253,13 +255,10 @@ def refresh_events(spotify):
     logging.info("Generated {} new events".format(len(new_events)))
 
     if len(new_events) > 0:
-        spotify.events.insert_many(new_events)
+        for event in new_events:
+            db.add_event(event)
 
-    add_prev_track_id()
-    logging.info("Added prev track info")
-    read.update_full_tracks()
-    add_info_to_events()
-    logging.info("Done processing events")
+    add_prev_track_id(db)
 
 
 def main():

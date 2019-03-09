@@ -3,13 +3,14 @@ import util
 from upload.upload import run_export
 from db.db import DbStore
 from analysis import gen_events
-
+from scripts.mongo_transfer import *
 
 class DownloadException(Exception):
     pass
 
 
 UPDATE_SLEEP_MS = 50
+
 
 def download_and_store_history(db: DbStore, creds: Credentials):
     j = get_recently_played(creds)
@@ -107,15 +108,17 @@ def do_main():
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger().setLevel(logging.DEBUG)
+    move_events()
+    return
     db = DbStore()
-
+    print(db.latest_event())
     creds = get_credentials()
 
     download_and_store_history(db, creds)
     perform_update(db, creds)
 
     # Update events
-    gen_events.refresh_events(util.get_spotify_db())
+    gen_events.refresh_events(db)
 
     # Backup
     run_export()

@@ -69,5 +69,27 @@ create table if not exists track_artist (
   foreign key (artist_id) references artist (artist_id)
 );
 
+create table if not exists event (
+  action             text,
+  prev_progress      int,
+  prev_timestamp     int,
+  prev_track_id      text,
+  -- Below is just the state
+  timestamp          int,
+  api_timestamp      real,
+  track_id           text, -- No FK to track as there may not be an existing track
+  progress_ms        int,
+  duration_ms        int,
+  is_playing         int,
+  repeat             int,
+  shuffle_state      int,
+  device_id          text,
+  device_active      int,
+  volume_percent     int,
+  device_type        text,
+  name               text
+);
+
 --IGNORE_ERROR
-alter table play add column context text;
+alter table play
+  add column context text;

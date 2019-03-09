@@ -193,3 +193,71 @@ class DbStore:
         self.conn.execute("update play set context=? where played_at=?", (context_uri, played_at,))
         if not no_commit:
             self.conn.commit()
+
+    def add_event(self, event):
+        repeat = True if self.s(event, "repeat_state") == "on" else False
+
+        data_tuple = (event["action"], event["prev_progress"], event["prev_timestamp"], event.get("prev_track_id"),
+                      self.s(event, "timestamp"),
+                      self.s(event, "api_timestamp"),
+                      self.s(event, "track_id"), self.s(event, "progress_ms"), self.s(event, "duration_ms"),
+                      self.s(event, "is_playing"), repeat, self.s(event, "shuffle_state"),
+                      self.s_dev(event, "id"), self.s_dev(event, "is_active"), self.s_dev(event, "volume_percent"),
+                      self.s_dev(event, "type"), self.s_dev(event, "name"))
+
+        self.conn.execute("insert into event values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", data_tuple)
+
+    def latest_event(self):
+        res_list = self.conn.execute("select * from event order by timestamp desc limit 1").fetchall()
+        if len(res_list) == 0:
+            return None
+        event = res_list[0]
+        return self.map_event(event)
+
+    def events_with_track_id(self):
+        res = self.conn.execute("select * from event where track_id is not null").fetchall()
+        return list(map(lambda x: self.map_event(x), res))
+
+    def map_event(self, event):
+        return {
+            "action": event[0],
+            "prev_progress": event[1],
+            "prev_timestamp": event[2],
+            "prev_track_id": event[3],
+            "timestamp": event[4],
+            "state": {
+                "timestamp": event[4],
+                "api_timestamp": event[5],
+                "track_id": event[6],
+                "progress_ms": event[7],
+                "duration_ms": event[8],
+                "is_playing": event[9],
+                "repeat_state": "on" if event[10] else "off",
+                "shuffle_state": event[11],
+                "device": {
+                    "id": event[12],
+                    "active": event[13],
+                    "volume_percent": event[14],
+                    "type": event[15],
+                    "name": event[16]
+                }
+            }
+        }
+
+    def set_prev_track_id(self, timestamp, prev_track_id):
+        self.conn.execute("update event set prev_track_id = ? where timestamp=?", (prev_track_id, timestamp,))
+
+    def s(self, event, k):
+        if event.get("state") is None:
+            return None
+        return event["state"].get(k)
+
+    def s_dev(self, event, k):
+        if event.get("state") is None:
+            return None
+        if event["state"].get("device") is None:
+            return None
+        return event["state"]["device"][k]
+
+    def commit(self):
+        self.conn.commit()
