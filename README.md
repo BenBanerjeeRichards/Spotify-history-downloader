@@ -14,21 +14,44 @@ Coming soon:
 
 * Ben's Big Data Analysis to tell you everything you already knew about your music taste  
 
-## Environment variables 
-Store your Spotify API credentials and Mongo db credentials in these 
-environment variables. Get client id and secret from your spotify app on
-the dev dashboard.
+## Installation 
+The downloader needs to run on a server so it can execute an hourly cron job. You could run it on your computer but remember that, due to spotify limitations, if you listen to more than 50 songs with your computer turned off then some songs will be lost. I personally use Digital Ocean (the cheapest tier). The downloader uses very little resources 
 
-SPOTIFY_CLIENT_ID - the client id of your developer app
+1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and create a new application
+2. In the dashboard, click on the application you just created and in the green "Edit Settings" add "http://localhost:8080" as a redirect url. 
+3. Download [get_token.py](https://raw.githubusercontent.com/BenBanerjeeRichards/Spotify-history-downloader/master/get_token.py) to **your computer**. 
+4. Run ```$ python3 get_token.py```. Note you need to install the packages ```bottle``` and ```requests```
+5. Follow the instructions, a browser should open with all the environment variables you need.
 
-SPOTIFY_CLIENT_SECRET - client secret
+Next ssh into your server 
 
-SPOTIFY_REFRESH_TOKEN - obtain this using get_token.py (standalone script, run as `python3 get_token.py`) and follow the prompts
+1. Paste the contents of step 5 (all of the variables) into your ~/.bashrc (or ~/.bash_profile) file. 
+2. Reload bash via ```$ bash```
+3. ```$ git clone https://github.com/benbanerjeerichards/Spotify-history-downloader && cd Spotify-history-downloader```
+4. ```pip3 install -r requirements.txt```
+5. ```python3 main.py```
 
-SPOTIFY_MONGO_USERNAME - mongo db username
+Hopefully that should work. You can inspect main.sqlite using ```sqlite3 main.sqlite``` and run ```select * from play;``` to see the downloaded files.
 
-SPOTIFY_MONGO_PASSWORD - mongo db password
+Finally you need to set up a cron job to run the script every hour. Most linux distros should have a ```/etc/cron.hourly/``` folder you can put scripts into that run every hour. *** DO NOT put main.py directly in this folder***
 
-Mongo db information is not needed if you have not set up credentials on mongodb. 
-If you are hosting the project on a server then it is recommended that you 
-configure the firewall to block access to your mongodb instance. 
+Instead:
+
+1. Create the following file:
+
+```bash
+$ touch /etc/cron.hourly/spotify
+$ chmod 777  /etc/cron.hourly/spotify
+$ nano /etc/cron.hourly/spotify
+```
+
+2. Paste the following into that file, changing the path as needed
+
+
+```bash
+#!/bin/bash
+
+python3 ~/Spotify-history-downloader/main.py
+```
+
+Hopefully that should now work.
