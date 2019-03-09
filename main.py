@@ -109,6 +109,8 @@ def do_main():
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger().setLevel(logging.DEBUG)
     db = DbStore()
+    db.export_plays_as_csv("music.csv")
+    return
     creds = get_credentials()
 
     download_and_store_history(db, creds)

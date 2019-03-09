@@ -2,6 +2,7 @@ import sqlite3
 import util
 import logging
 import util
+import csv
 
 
 class DbStore:
@@ -258,6 +259,14 @@ class DbStore:
         if event["state"].get("device") is None:
             return None
         return event["state"]["device"][k]
+
+    def export_plays_as_csv(self, oot):
+        with open(oot, "w+") as f:
+            writer = csv.writer(f)
+            writer.writerow(["id", "Played At", "Spotify Track ID", "Track", "Spotify album ID", "Album",
+                             "Spotify artist ID", "Artist", "Context"])
+            for track in self.conn.execute("select * from play order by played_at asc").fetchall():
+                writer.writerow(track)
 
     def commit(self):
         self.conn.commit()
