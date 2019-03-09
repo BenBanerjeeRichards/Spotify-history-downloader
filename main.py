@@ -1,6 +1,6 @@
 from spotify import *
 import util
-from upload.upload import run_export, write_basic_track_file
+from upload.upload import run_export
 from db.db import DbStore
 from analysis import gen_events
 
@@ -10,6 +10,11 @@ class DownloadException(Exception):
 
 
 UPDATE_SLEEP_MS = 50
+
+def download_and_store_history(db: DbStore, creds: Credentials):
+    j = get_recently_played(creds)
+    logging.info("Got {} tracks".format(len(j["items"])))
+    insert(j["items"], db)
 
 
 def insert(tracks, db: DbStore):
@@ -79,30 +84,15 @@ def update_albums(db: DbStore, creds: Credentials):
                              album["label"], album["popularity"], album["genres"])
 
 
-def import_from_mongo():
-    db = DbStore()
+def perform_update(db: DbStore, creds: Credentials):
+    logging.info("Updating tracks")
+    update_tracks(db, creds)
 
-    i = 0
-    for track in util.get_spotify_db().tracks.find():
-        db.add_play_from_mongo(track)
-        i += 1
+    logging.info("Updating artists")
+    update_artists(db, creds)
 
-        if i % 100 == 0:
-            print("Added {}".format(i))
-
-
-def import_context_from_mongo():
-    db = DbStore()
-    for i, track in enumerate(util.get_spotify_db().tracks.find()):
-        dt = track["played_at"].isoformat()
-        context = track.get("context")
-        if context is not None and "uri" in context:
-            db.add_context(dt, context["uri"])
-
-        if i % 100 == 0:
-            print("Added {}".format(i))
-
-    db.conn.commit()
+    logging.info("Updating albums")
+    update_albums(db, creds)
 
 
 def do_main():
@@ -114,29 +104,15 @@ def do_main():
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S', filename=log_path)
 
-    # Disable logging we don't need
-    # O/W we end up with GBs of logs in just 24 hours
-    # (mainly thanks to player state requests, of which there are thousands of)
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    # logging.getLogger().addHandler(logging.StreamHandler())
     logging.getLogger().setLevel(logging.DEBUG)
     db = DbStore()
 
-    logging.info("Getting recently played tracks")
     creds = get_credentials()
-    j = get_recently_played(creds)
-    logging.info("Got {} tracks".format(len(j["items"])))
-    insert(j["items"], db)
 
-    logging.info("Updating tracks")
-    update_tracks(db, creds)
-
-    logging.info("Updating artists")
-    update_artists(db, creds)
-
-    logging.info("Updating albums")
-    update_albums(db, creds)
+    download_and_store_history(db, creds)
+    perform_update(db, creds)
 
     # Update events
     gen_events.refresh_events(util.get_spotify_db())
