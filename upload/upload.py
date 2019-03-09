@@ -30,7 +30,6 @@ def run_export():
     if os.path.exists("tracks.txt"):
         prev_tracks = open("tracks.txt", "r").read()
     db = DbStore()
-    write_basic_track_file(db)
     write_csv(db)
 
     if open("tracks.txt", "r").read() != prev_tracks:
