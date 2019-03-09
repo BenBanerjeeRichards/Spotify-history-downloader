@@ -31,6 +31,7 @@ def run_export():
         prev_tracks = open("tracks.txt", "r").read()
     db = DbStore()
     write_basic_track_file(db)
+    write_csv(db)
 
     if open("tracks.txt", "r").read() != prev_tracks:
         logging.info("tracks.txt changed so reuploading to github")
