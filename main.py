@@ -108,10 +108,7 @@ def do_main():
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger().setLevel(logging.DEBUG)
-    move_events()
-    return
     db = DbStore()
-    print(db.latest_event())
     creds = get_credentials()
 
     download_and_store_history(db, creds)
