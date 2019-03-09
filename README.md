@@ -15,6 +15,9 @@ Coming soon:
 * Ben's Big Data Analysis to tell you everything you already knew about your music taste  
 
 ## Installation 
+
+Note: Installation is not exactly easy so please create an issue if you need help. 
+
 The downloader needs to run on a server so it can execute an hourly cron job. You could run it on your computer but remember that, due to spotify limitations, if you listen to more than 50 songs with your computer turned off then some songs will be lost. I personally use Digital Ocean (the cheapest tier). The downloader uses very little resources 
 
 1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and create a new application
@@ -33,7 +36,7 @@ Next ssh into your server
 
 Hopefully that should work. You can inspect main.sqlite using ```sqlite3 main.sqlite``` and run ```select * from play;``` to see the downloaded files.
 
-Finally you need to set up a cron job to run the script every hour. Most linux distros should have a ```/etc/cron.hourly/``` folder you can put scripts into that run every hour. *** DO NOT put main.py directly in this folder***
+Finally you need to set up a cron job to run the script every hour. Most linux distros should have a ```/etc/cron.hourly/``` folder you can put scripts into that run every hour. ***DO NOT put main.py directly in this folder***
 
 Instead:
 
