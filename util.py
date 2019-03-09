@@ -68,7 +68,6 @@ def config():
     if os.path.isfile(get_path("config-ben.yml")):
         secondary = yaml.load(open(get_path("config-ben.yml")))
         CONFIG = shite_merge_config(CONFIG, secondary)
-        print(CONFIG)
 
     return CONFIG
 

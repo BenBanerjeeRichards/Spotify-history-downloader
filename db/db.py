@@ -12,10 +12,7 @@ class DbStore:
         logging.debug("Got connection to database")
 
         schema = open(util.get_path("db/db_schema.sql")).read()
-        logging.debug("Opened schema file {}".format(schema))
         for statement in schema.split(";"):
-            logging.debug("Executing schema {}".format(schema))
-
             try:
                 self.conn.execute(statement)
             except sqlite3.OperationalError as e:

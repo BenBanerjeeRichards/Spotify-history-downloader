@@ -12,8 +12,7 @@ class DownloadException(Exception):
 UPDATE_SLEEP_MS = 50
 
 
-def insert(tracks):
-    db = DbStore()
+def insert(tracks, db: DbStore):
     logging.info("Got db instance")
 
     # Get last track listened to stored in db
@@ -29,6 +28,7 @@ def insert(tracks):
     logging.info("Would insert {} tracks".format(len(tracks)))
 
     for track in tracks:
+        logging.info("Adding track {}".format(track["track"]["name"]))
         db.add_play(track)
 
 
@@ -104,30 +104,30 @@ def import_context_from_mongo():
 
     db.conn.commit()
 
+
 def do_main():
+    log_path = util.get_path("spotify-downloader.log")
+    print("Log path = {}".format(log_path))
+
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.DEBUG,
-        datefmt='%Y-%m-%d %H:%M:%S', filename=util.get_path("spotify-downloader.log"))
+        datefmt='%Y-%m-%d %H:%M:%S', filename=log_path)
 
     # Disable logging we don't need
     # O/W we end up with GBs of logs in just 24 hours
     # (mainly thanks to player state requests, of which there are thousands of)
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger().addHandler(logging.StreamHandler())
+    # logging.getLogger().addHandler(logging.StreamHandler())
     logging.getLogger().setLevel(logging.DEBUG)
+    db = DbStore()
 
     logging.info("Getting recently played tracks")
     creds = get_credentials()
     j = get_recently_played(creds)
-    for track in j["items"]:
-        print(track["played_at"], track["track"]["name"])
-
     logging.info("Got {} tracks".format(len(j["items"])))
-    insert(j["items"])
-
-    db = DbStore()
+    insert(j["items"], db)
 
     logging.info("Updating tracks")
     update_tracks(db, creds)
