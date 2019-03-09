@@ -117,8 +117,6 @@ def do_main():
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger().addHandler(logging.StreamHandler())
     logging.getLogger().setLevel(logging.DEBUG)
-    import_context_from_mongo()
-    return
 
     logging.info("Getting recently played tracks")
     creds = get_credentials()

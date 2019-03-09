@@ -48,10 +48,8 @@ def config():
     possible_locations = [
         "" if "SPOTIFY_DOWNLOADER_CONFIG_PATH" not in os.environ else os.environ["SPOTIFY_DOWNLOADER_CONFIG_PATH"],
         "config.yml",
-        "spotify_downloader_config.yml",
-        "~/spotify_downloader_config.yml",
+        get_path("config.yml"),
         "~/Spotify-history-downloader/config.yml",
-        "~/Spotify-history-downloader/spotify_downloader_config.yml",
         "~/IdeaProjects/Spotify-history-downloader/config.yml"
     ]
 
@@ -66,12 +64,23 @@ def config():
             CONFIG = yaml.load(open(path))
             logging.info("Loaded! {}".format(CONFIG))
             logging.info("Returning from config {}".format(CONFIG))
-            return CONFIG
 
-    logging.error("No config file found, checked " + str(possible_locations))
-    logging.info("Returning {}".format(CONFIG))
+    if os.path.isfile(get_path("config-ben.yml")):
+        secondary = yaml.load(open(get_path("config-ben.yml")))
+        CONFIG = shite_merge_config(CONFIG, secondary)
+        print(CONFIG)
 
     return CONFIG
+
+
+def shite_merge_config(main, sec):
+    for section in main:
+        for k in main[section]:
+            if section in sec and k in sec[section]:
+                # Overwrite
+                main[section][k] = sec[section][k]
+
+    return main
 
 
 def percent(a: int, b: int) -> int:
