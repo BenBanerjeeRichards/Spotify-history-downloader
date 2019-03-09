@@ -68,3 +68,6 @@ create table if not exists track_artist (
   foreign key (track_id) references track (track_id),
   foreign key (artist_id) references artist (artist_id)
 );
+
+--IGNORE_ERROR
+alter table play add column context text;

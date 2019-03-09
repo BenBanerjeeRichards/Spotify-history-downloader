@@ -91,6 +91,19 @@ def import_from_mongo():
             print("Added {}".format(i))
 
 
+def import_context_from_mongo():
+    db = DbStore()
+    for i, track in enumerate(util.get_spotify_db().tracks.find()):
+        dt = track["played_at"].isoformat()
+        context = track.get("context")
+        if context is not None and "uri" in context:
+            db.add_context(dt, context["uri"])
+
+        if i % 100 == 0:
+            print("Added {}".format(i))
+
+    db.conn.commit()
+
 def do_main():
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
@@ -104,6 +117,9 @@ def do_main():
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger().addHandler(logging.StreamHandler())
     logging.getLogger().setLevel(logging.DEBUG)
+    import_context_from_mongo()
+    return
+
     logging.info("Getting recently played tracks")
     creds = get_credentials()
     j = get_recently_played(creds)

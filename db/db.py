@@ -3,6 +3,7 @@ import util
 import logging
 import util
 
+
 class DbStore:
 
     def __init__(self):
@@ -14,7 +15,14 @@ class DbStore:
         logging.debug("Opened schema file {}".format(schema))
         for statement in schema.split(";"):
             logging.debug("Executing schema {}".format(schema))
-            self.conn.execute(statement)
+
+            try:
+                self.conn.execute(statement)
+            except sqlite3.OperationalError as e:
+                if statement.strip().startswith("--IGNORE_ERROR"):
+                    logging.info("Ignoring error thrown by statement {}: {}".format(statement, e))
+                else:
+                    raise e
         self.conn.commit()
         logging.debug("Done!")
 
@@ -37,10 +45,14 @@ class DbStore:
         for artist in album["artists"]:
             self.add_album_artist(album["id"], artist["id"])
 
+        context = None
+        if play["context"] is not None and "uri" in play["context"]:
+            context = play["context"]["uri"]
+
         # Finally add play
-        self.conn.execute("insert into play values (?, ?, ?, ?, ?, ?, ?, ?)",
+        self.conn.execute("insert into play values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                           (None, play["played_at"], play["track"]["id"], track["name"], album["id"], album["name"],
-                           track["artists"][0]["id"], track["artists"][0]["name"]))
+                           track["artists"][0]["id"], track["artists"][0]["name"], context))
 
     # Used when transferring data over from mongo
     # Has different format than spotify API
@@ -179,3 +191,8 @@ class DbStore:
     def get_basic_tracks(self):
         return self.conn.execute(
             "select played_at, track_name, main_artist_name from play order by played_at asc").fetchall()
+
+    def add_context(self, played_at, context_uri, no_commit=True):
+        self.conn.execute("update play set context=? where played_at=?", (context_uri, played_at,))
+        if not no_commit:
+            self.conn.commit()
