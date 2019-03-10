@@ -34,11 +34,11 @@ def run_export():
     write_csv(db)
 
     if open("music.csv", "r").read() != prev_music:
-        logging.info("tracks.txt changed so reuploading to github")
+        logging.info("music.csv changed so reuploading to github")
         # I know should use subprocess
         os.system("rm main.sqlite")
         os.system("cp ../main.sqlite main.sqlite")
-        os.system("git add main.sqlite tracks.txt music.csv")
+        os.system("git add main.sqlite music.csv")
 
         os.system("git commit -m \"Data upload at {}\"".format(datetime.datetime.now().isoformat()))
         os.system("git push -u origin master")
