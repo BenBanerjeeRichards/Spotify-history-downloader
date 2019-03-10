@@ -17,37 +17,19 @@ db = util.get_spotify_db()
 
 
 def main():
-    tracks = db.tracks.find({})
     all_genres = []
-    today = datetime.datetime.now()
     freq = {}
+    genres = open("genres.txt", "r").read().split(",")
 
-    for track in tracks:
+    for genre in genres:
         # Get artist data
-        artist = db.artists.find_one({"id": track["track"]["artists"][0]["id"]})
-
-        if not artist:
-            logging.info("No artist found for track {}".format(track))
-            continue
-
-        if len(artist["genres"]) == 0:
-            continue
-
-        genre = artist["genres"][0]
         all_genres.append(genre)
+        if genre not in freq:
+            freq[genre] = 1
+        else:
+            freq[genre] += 1
 
-        days = (today - track["played_at"]).days
-        freq_value = math.exp(-0.05 * days) + 1
-
-        for genre in artist["genres"]:
-            if genre not in freq:
-                freq[genre] = freq_value
-            else:
-                freq[genre] += freq_value
-
-        print("{}:{}".format(days, freq_value))
-
-    genres_freqs = Counter(all_genres)
+    # genres_freqs = Counter(all_genres)
     wordcloud = WordCloud(width=1000, height=800).generate_from_frequencies(freq)
 
     image = wordcloud.to_image()

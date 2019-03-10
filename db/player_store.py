@@ -1,4 +1,4 @@
-import util
+import time
 from typing import List, Tuple, Dict
 import pymongo
 import sqlite3
@@ -111,6 +111,7 @@ class Sqlite3Store:
             del hm[k]
 
         return hm
+
     def _state_to_tuple(self, state):
         # Convert to tuple used by sqlite
         return (
@@ -129,6 +130,12 @@ class Sqlite3Store:
             self._safe_subget(state, "device", "type"),
             self._safe_subget(state, "device", "name"),
         )
+
+    def delete_states(self):
+        # Delete old states
+        timestamp = (time.time() - 86400) * 1000
+        self.conn.execute("delete from player where timestamp < ?", (timestamp,))
+        self.conn.commit()
 
     def _safe_subget(self, item, k1, k2):
         if item is None:
