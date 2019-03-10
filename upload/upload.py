@@ -26,13 +26,14 @@ def run_export():
 
     os.chdir(get_path("upload"))
 
-    prev_tracks = ""
-    if os.path.exists("tracks.txt"):
-        prev_tracks = open("tracks.txt", "r").read()
+    prev_music = ""
+    if os.path.exists("music.csv"):
+        prev_music = open("music.csv", "r").read()
+
     db = DbStore()
     write_csv(db)
 
-    if open("tracks.txt", "r").read() != prev_tracks:
+    if open("music.csv", "r").read() != prev_music:
         logging.info("tracks.txt changed so reuploading to github")
         # I know should use subprocess
         os.system("rm main.sqlite")
