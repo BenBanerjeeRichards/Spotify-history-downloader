@@ -136,6 +136,8 @@ class Sqlite3Store:
         timestamp = (time.time() - 86400) * 1000
         self.conn.execute("delete from player where timestamp < ?", (timestamp,))
         self.conn.commit()
+        self.conn.execute("vacuum")
+        self.conn.commit()
 
     def _safe_subget(self, item, k1, k2):
         if item is None:
