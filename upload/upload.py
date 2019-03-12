@@ -32,13 +32,13 @@ def run_export():
 
     db = DbStore()
     write_csv(db)
-
     if open("music.csv", "r").read() != prev_music:
         logging.info("music.csv changed so reuploading to github")
         # I know should use subprocess
         os.system("rm main.sqlite")
         os.system("cp ../main.sqlite main.sqlite")
-        os.system("git add main.sqlite music.csv")
+        os.system('sqlite3 main.sqlite ".dump" > main.sql')
+        os.system("git add main.sql music.csv")
 
         os.system("git commit -m \"Data upload at {}\"".format(datetime.datetime.now().isoformat()))
         os.system("git push -u origin master")
