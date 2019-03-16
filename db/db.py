@@ -270,3 +270,9 @@ class DbStore:
 
     def commit(self):
         self.conn.commit()
+
+    def track_ids(self):
+        return list(map(lambda x: x[0], self.conn.execute("select track_id from track").fetchall()))
+
+    def album_ids(self):
+        return list(map(lambda x: x[0], self.conn.execute("select album_id from album").fetchall()))
