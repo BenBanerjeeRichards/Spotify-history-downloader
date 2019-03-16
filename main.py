@@ -1,4 +1,3 @@
-from scripts.fix_db_mapping import fix_tracks
 from spotify import *
 import util
 from upload.upload import run_export
@@ -111,8 +110,6 @@ def do_main():
     logging.getLogger().setLevel(logging.DEBUG)
     db = DbStore()
     creds = get_credentials()
-    fix_tracks(creds, db)
-    return
 
     download_and_store_history(db, creds)
     perform_update(db, creds)
