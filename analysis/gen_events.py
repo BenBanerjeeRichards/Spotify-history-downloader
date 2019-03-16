@@ -264,6 +264,7 @@ def refresh_events(db: DbStore):
     player_store.store().delete_states()
     logging.info("Done with gen_events")
 
+
 def main():
     spotify = util.get_spotify_db()
 

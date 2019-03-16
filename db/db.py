@@ -170,7 +170,7 @@ class DbStore:
         find = self.conn.execute("select count(*) from track_artist where track_id=? and artist_id=?",
                                  (track_id, artist_id,))
         if find.fetchone()[0] == 0:
-            self.conn.execute("insert into album_artist values (?, ?)",
+            self.conn.execute("insert into track_artist values (?, ?)",
                               (track_id, artist_id,))
             self.conn.commit()
 
