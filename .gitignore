@@ -9,3 +9,4 @@ import.json
 spotify.sh
 config.yml
 config-ben.yml
+*.sqlite
