@@ -5,6 +5,7 @@ from db.db import DbStore
 from analysis import gen_events
 from scripts.mongo_transfer import *
 
+
 class DownloadException(Exception):
     pass
 
@@ -97,17 +98,6 @@ def perform_update(db: DbStore, creds: Credentials):
 
 
 def do_main():
-    log_path = util.get_path("spotify-downloader.log")
-    print("Log path = {}".format(log_path))
-
-    logging.basicConfig(
-        format='%(asctime)s %(levelname)-8s %(message)s',
-        level=logging.DEBUG,
-        datefmt='%Y-%m-%d %H:%M:%S', filename=log_path)
-
-    logging.getLogger("requests").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger().setLevel(logging.DEBUG)
     db = DbStore()
     creds = get_credentials()
 
@@ -123,6 +113,17 @@ def do_main():
 
 
 def main():
+    log_path = util.get_path("spotify-downloader.log")
+    print("Log path = {}".format(log_path))
+
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        level=logging.DEBUG,
+        datefmt='%Y-%m-%d %H:%M:%S', filename=log_path)
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger().setLevel(logging.DEBUG)
+
     try:
         do_main()
     except Exception as e:
