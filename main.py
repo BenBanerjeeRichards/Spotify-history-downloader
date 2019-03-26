@@ -1,4 +1,17 @@
 import logging
+
+def configure_logging():
+    log_path = util.get_path("spotify-downloader.log")
+    print("Log path = {}".format(log_path))
+
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        level=logging.DEBUG,
+        datefmt='%Y-%m-%d %H:%M:%S', filename=log_path)
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger().setLevel(logging.DEBUG)
+
 configure_logging()
 
 from spotify import *
@@ -115,17 +128,6 @@ def do_main():
     logging.info("Done!")
 
 
-def configure_logging():
-    log_path = util.get_path("spotify-downloader.log")
-    print("Log path = {}".format(log_path))
-
-    logging.basicConfig(
-        format='%(asctime)s %(levelname)-8s %(message)s',
-        level=logging.DEBUG,
-        datefmt='%Y-%m-%d %H:%M:%S', filename=log_path)
-    logging.getLogger("requests").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger().setLevel(logging.DEBUG)
 
  
 def main():
