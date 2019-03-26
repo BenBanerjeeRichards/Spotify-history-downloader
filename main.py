@@ -1,3 +1,6 @@
+import logging
+configure_logging()
+
 from spotify import *
 import util
 from upload.upload import run_export
@@ -112,7 +115,7 @@ def do_main():
     logging.info("Done!")
 
 
-def main():
+def configure_logging():
     log_path = util.get_path("spotify-downloader.log")
     print("Log path = {}".format(log_path))
 
@@ -124,6 +127,8 @@ def main():
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger().setLevel(logging.DEBUG)
 
+ 
+def main():
     try:
         do_main()
     except Exception as e:
