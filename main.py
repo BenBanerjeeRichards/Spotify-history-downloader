@@ -1,7 +1,8 @@
 import logging
+import sys
 
 def configure_logging():
-    log_path = util.get_path("spotify-downloader.log")
+    log_path = sys.path[0] + "/" + "spotify-downloader.log"
     print("Log path = {}".format(log_path))
 
     logging.basicConfig(
@@ -15,7 +16,6 @@ def configure_logging():
 configure_logging()
 
 from spotify import *
-import util
 from upload.upload import run_export
 from db.db import DbStore
 from analysis import gen_events
