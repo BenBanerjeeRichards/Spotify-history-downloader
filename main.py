@@ -1,6 +1,7 @@
 import logging
 import sys
 
+
 def configure_logging():
     log_path = sys.path[0] + "/" + "spotify-downloader.log"
     print("Log path = {}".format(log_path))
@@ -38,22 +39,16 @@ def download_and_store_history(db: DbStore, creds: Credentials):
 
 
 def insert(tracks, db: DbStore):
-    logging.info("Got db instance")
-
     # Get last track listened to stored in db
     # This is to ensure we don't duplicate items in database
     latest_track_time = db.most_recent_played_at()
-    logging.info("Retrieved tracks from spotify, filtering out ones played up to {}".format(latest_track_time))
+    logging.info("Retrieved tracks from Spotify, filtering out ones played up to {}".format(latest_track_time))
     if latest_track_time:
         tracks = remove_tracks_before_inc(tracks, latest_track_time)
         logging.info("Inserting {} tracks".format(len(tracks)))
-    else:
-        logging.info("Nothing played since last download, doing nothing...")
-
-    logging.info("Would insert {} tracks".format(len(tracks)))
 
     for track in tracks:
-        logging.info("Adding track {}".format(track["track"]["name"]))
+        logging.info("Adding track {}".format(util.track_to_string(track)))
         db.add_play(track)
 
 
@@ -61,12 +56,11 @@ def remove_tracks_before_inc(tracks, stop_at_time):
     new = []
     for track in tracks:
         if track["played_at"] == stop_at_time:
-            logging.info("Found repeat track, stopping: {}".format(track["played_at"]))
-
+            logging.info("Found repeat track {}, stopping at played_at = : {}".format(util.track_to_string(track), track["played_at"]))
             break
         new.append(track)
 
-    logging.info("Found all new tracks. Initial = {}, New = {}, Filterd = {}"
+    logging.info("Found all new tracks. Initial = {}, New = {}, Filtered = {}"
                  .format(len(tracks), len(new), len(tracks) - len(new)))
 
     return new
@@ -130,8 +124,6 @@ def do_main():
     logging.info("Done!")
 
 
-
- 
 def main():
     try:
         do_main()

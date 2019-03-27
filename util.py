@@ -122,3 +122,8 @@ def track_frequency(tracks: [object], reverse=True) -> [(str, int)]:
             freq[t_id] = 1
 
     return sorted(freq.items(), key=lambda x: x[1], reverse=reverse)
+
+
+def track_to_string(track) -> str:
+    artist = "<UNKNOWN>" if len(track["track"]["artists"]) == 0 else track["track"]["artists"][0]["name"]
+    return "[{}] {} - {}".format(track["track"]["id"], artist, track["track"]["name"])
