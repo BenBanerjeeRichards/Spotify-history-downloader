@@ -6,6 +6,7 @@ import requests
 from http import HTTPStatus
 import time
 
+
 class Credentials:
     def __init__(self, client_id, client_secret, refresh):
         self.client_id = client_id
@@ -123,11 +124,25 @@ def get_current_playback(creds):
     return res.json()
 
 
+def get_profile(creds: Credentials):
+    head = {"Authorization": "Bearer {}".format(creds.access_token)}
+    return requests.get("https://api.spotify.com/v1/me", headers=head).json()
+
+
 def spotify_get_json(url, creds):
     head = {"Authorization": "Bearer {}".format(creds.access_token)}
     res = requests.get(url, headers=head)
     res.raise_for_status()
     return res.json()
+
+
+def get_songs_in_playlist(user_id, playlist_id, creds: Credentials):
+    url = "https://api.spotify.com/v1/users/{}/playlists/{}/tracks?fields=items(track(id))%2Cnext&limit={}" \
+        .format(user_id, playlist_id, 100)
+
+    items = paging_get_all(url, creds)
+    return list(map(lambda x: x["track"]["id"], items))
+
 
 
 # Return limited playlist information
@@ -168,7 +183,7 @@ def remove_from_playlist(user_id, playlist_id, track_ids, creds):
     return chunked_function_call(remove_from_pl_inner, {}, tracks_json, 100, "t_json")
 
 
-def add_to_playlist(user_id, playlist_id, track_ids, creds):
+def add_to_playlist(user_id, playlist_id, track_ids, creds, replace=False):
     tracks_json = []
     for t_id in track_ids:
         tracks_json.append("spotify:track:{}".format(t_id))
@@ -176,7 +191,11 @@ def add_to_playlist(user_id, playlist_id, track_ids, creds):
     def remove_from_pl_inner(t_json):
         head = {"Authorization": "Bearer {}".format(creds.access_token)}
         url = "https://api.spotify.com/v1/users/{}/playlists/{}/tracks".format(user_id, playlist_id)
-        res = requests.post(url, headers=head, json={"uris": t_json})
+        if replace:
+            res = requests.put(url, headers=head, json={"uris": t_json})
+        else:
+            res = requests.post(url, headers=head, json={"uris": t_json})
+
         res.raise_for_status()
         return res.json()
 
@@ -214,7 +233,8 @@ def create_playlist(user: str, name: str, public: bool, collaborative: bool, des
         "description": description
     }
 
-    return authenticated_spotify_post("https://api.spotify.com/v1/users/{}/playlists".format(user, body, creds), body, creds)
+    return authenticated_spotify_post("https://api.spotify.com/v1/users/{}/playlists".format(user, body, creds), body,
+                                      creds)
 
 
 def authenticated_spotify_post(url, body: dict, creds):

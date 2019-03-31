@@ -56,7 +56,7 @@ def remove_tracks_before_inc(tracks, stop_at_time):
     new = []
     for track in tracks:
         if track["played_at"] == stop_at_time:
-            logging.info("Found repeat track {}, stopping at played_at = : {}".format(util.track_to_string(track), track["played_at"]))
+            logging.info("Found repeat track {}, stopping at played_at = {}".format(util.track_to_string(track), track["played_at"]))
             break
         new.append(track)
 
