@@ -90,6 +90,23 @@ create table if not exists event (
   name               text
 );
 
+create table if not exists genre (
+  id integer primary key autoincrement,
+  name text unique not null
+);
+
+create table if not exists artist_genre (
+  artist_id text,
+  genre_id int,
+  foreign key (artist_id) references artist (artist_id),
+  foreign key (genre_id) references genre (id)
+);
+
+create table if not exists info (
+  version text
+);
+
+
 --IGNORE_ERROR
 alter table play
   add column context text;

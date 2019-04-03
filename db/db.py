@@ -3,6 +3,8 @@ import util
 import logging
 import util
 import csv
+import datetime
+import dateutil.parser
 
 
 class DbStore:
@@ -23,6 +25,14 @@ class DbStore:
                     raise e
         self.conn.commit()
         logging.debug("Done!")
+
+        if self.get_db_version() == "1":
+            logging.info("Got db version of 1, migrating to version 2")
+            if self.migrate_genre():
+                logging.info("It worked")
+                self.set_db_version("2")
+            else:
+                logging.error("Failed to migrate genres")
 
     # Adds a play event using data from spotify api
     # If needed creates rows in artist, album, ... tables with incomplete information
@@ -276,3 +286,82 @@ class DbStore:
 
     def album_ids(self):
         return list(map(lambda x: x[0], self.conn.execute("select album_id from album").fetchall()))
+
+    def get_first_record(self):
+        res = self.conn.execute("select played_at from play order by played_at asc limit 1").fetchone()
+        return dateutil.parser.parse(res[0])
+
+    def play_from_name_and_artist(self, name, artist):
+        return self.query_db("select * from play where track_name=? and main_artist_name=? limit 1",
+                             (name, artist), True)
+
+    def as_list(self, result):
+        res = []
+        for r in result.fetchall():
+            res.append(r)
+
+        return res
+
+    def query_db(self, query, args=(), one=False):
+        cur = self.conn.cursor()
+        cur.execute(query, args)
+        r = [dict((cur.description[i][0], value)
+                  for i, value in enumerate(row)) for row in cur.fetchall()]
+        return (r[0] if r else None) if one else r
+
+    def get_db_version(self):
+        res = self.as_list(self.conn.execute("select version from info order by version desc"))
+        if len(res) == 0:
+            self.set_db_version("1")
+            return 1
+        return res[0][0]
+
+    def set_db_version(self, version):
+        with Cursor(self) as cur:
+            cur.execute("insert into info values (?)", (version,))
+
+    # Add genre to db if it doesn't exist. Then return it's id
+    def add_genre_if_not_exists(self, name) -> int:
+        if not self.exists("genre", "name", name):
+            with Cursor(self) as cur:
+                cur.execute("insert into genre values (?, ?)", (None, name))
+
+        with Cursor(self) as cur:
+            return cur.execute("select id from genre where name = ?", (name,)).fetchone()[0]
+
+    def add_genre_to_artist(self, artist_id, genre_name):
+        genre_id = self.add_genre_if_not_exists(genre_name)
+        with Cursor(self) as cur:
+            cur.execute("insert into artist_genre values (?, ?)", (artist_id, genre_id))
+
+    def migrate_genre(self):
+        logging.info("(dave attenborough in hushed tones) And so, the mass genre migration begins")
+        no_genre = 0
+        has_genre = 0
+        for artist in self.query_db("select artist_id, genres from artist"):
+            if artist["genres"] is None or len(artist["genres"].strip()) == 0:
+                # too indie
+                no_genre += 1
+            else:
+                genres = artist["genres"].strip()
+                has_genre += 1
+                for genre in genres.split(","):
+                    genre = genre.strip()
+                    assert genre != ""
+                    self.add_genre_to_artist(artist["artist_id"], genre)
+
+        logging.info("Migrated genres has_genre = {} no genre 'cause it's too indie' = {}".format(has_genre, no_genre))
+        return True
+
+
+class Cursor:
+
+    def __init__(self, db: DbStore):
+        self.db = db
+
+    def __enter__(self):
+        self.cursor = self.db.conn.cursor()
+        return self.cursor
+
+    def __exit__(self, a, b, c):
+        self.cursor.close()
