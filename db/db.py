@@ -131,6 +131,10 @@ class DbStore:
             genres=?
           where artist_id = ?
           """, (popularity, followers, ",".join(genres), artist_id,))
+
+        for genre in genres:
+            self.add_genre_to_artist(artist_id, genre)
+
         self.conn.commit()
 
     def incomplete_album_ids(self):
