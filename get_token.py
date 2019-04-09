@@ -8,7 +8,6 @@ import requests
 CLIENT_SECRET = None
 CLIENT_ID = None
 
-
 def start():
     run(host='localhost', port=8080, debug=True)
 
