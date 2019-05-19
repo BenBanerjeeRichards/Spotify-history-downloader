@@ -3,7 +3,7 @@ from typing import List, Tuple, Dict
 import pymongo
 import sqlite3
 import util
-
+import logging
 
 class MongoStore:
 
@@ -66,6 +66,10 @@ class Sqlite3Store:
         return list(set(ids))
 
     def player_states_after_time_asc(self, after_timestamp: float):
+        count = self.conn.execute("select count(*) from player where timestamp > ? order by timestamp ASC", (after_timestamp,))
+        n = count.fetchall()[0][0]
+        logging.info("COUNT events = {}".format(n))
+        print("COUNT IS {}".format(n))
         res = self.conn.execute("select * from player where timestamp > ? order by timestamp ASC", (after_timestamp,))
         return self._result_to_json(res)
 
