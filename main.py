@@ -117,7 +117,8 @@ def do_main():
     perform_update(db, creds)
 
     # Update events
-    gen_events.refresh_events(db)
+    #TODO FIXME IMPORTANT This must be fixed soon otherwise space will be used up!
+    #gen_events.refresh_events(db)
 
     # Backup
     run_export()
