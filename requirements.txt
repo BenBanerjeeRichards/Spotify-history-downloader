@@ -7,3 +7,4 @@ requests
 pyyaml
 bottle
 python-dateutil
+boto3

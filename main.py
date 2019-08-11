@@ -1,7 +1,6 @@
 import logging
 import sys
 
-
 def configure_logging():
     log_path = sys.path[0] + "/log/" + "spotify-downloader.log"
     print("Log path = {}".format(log_path))
@@ -19,10 +18,9 @@ def configure_logging():
 configure_logging()
 
 from spotify import *
-from upload.upload import run_export
 from db.db import DbStore
 import util
-
+from upload.s3_upload import upload
 
 class DownloadException(Exception):
     pass
@@ -117,7 +115,7 @@ def do_main():
     perform_update(db, creds)
 
     # Backup
-    run_export()
+    upload()
     logging.info("Done!")
 
 
