@@ -1,18 +1,25 @@
 import logging
 import sys
 
+
 def configure_logging():
     log_path = sys.path[0] + "/log/" + "spotify-downloader.log"
     print("Log path = {}".format(log_path))
 
     logging.basicConfig(
-        format='%(asctime)s %(levelname)-8s %(message)s',
+        format='%(asctime)s %(levelname)-8s %(name)-20s %(message)s',
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S', filename=log_path)
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger().setLevel(logging.DEBUG)
     logging.getLogger().addHandler(logging.StreamHandler())
+
+    # Otherwise boto will log really verbose including file contents
+    boto_resources_logger = logging.getLogger('botocore')
+    boto_resources_logger.setLevel('INFO')
+    boto_resources_logger = logging.getLogger('boto3')
+    boto_resources_logger.setLevel('INFO')
 
 
 configure_logging()
@@ -21,6 +28,7 @@ from spotify import *
 from db.db import DbStore
 import util
 from upload.s3_upload import upload
+
 
 class DownloadException(Exception):
     pass
