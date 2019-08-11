@@ -3,7 +3,7 @@ import sys
 
 
 def configure_logging():
-    log_path = sys.path[0] + "/" + "spotify-downloader.log"
+    log_path = sys.path[0] + "/log/" + "spotify-downloader.log"
     print("Log path = {}".format(log_path))
 
     logging.basicConfig(
@@ -21,8 +21,7 @@ configure_logging()
 from spotify import *
 from upload.upload import run_export
 from db.db import DbStore
-from analysis import gen_events
-from scripts.mongo_transfer import *
+import util
 
 
 class DownloadException(Exception):
@@ -56,7 +55,8 @@ def remove_tracks_before_inc(tracks, stop_at_time):
     new = []
     for track in tracks:
         if track["played_at"] == stop_at_time:
-            logging.info("Found repeat track {}, stopping at played_at = {}".format(util.track_to_string(track), track["played_at"]))
+            logging.info("Found repeat track {}, stopping at played_at = {}".format(util.track_to_string(track),
+                                                                                    track["played_at"]))
             break
         new.append(track)
 
@@ -115,10 +115,6 @@ def do_main():
 
     download_and_store_history(db, creds)
     perform_update(db, creds)
-
-    # Update events
-    #TODO FIXME IMPORTANT This must be fixed soon otherwise space will be used up!
-    #gen_events.refresh_events(db)
 
     # Backup
     run_export()

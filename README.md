@@ -3,11 +3,11 @@
 Continually download your spotify listening history. Gets around the 50 song history limit of the spotify API.
 
 * Download the songs you listen to for > 30 seconds (this is your normal spotify listening history)
-* Generate detailed events (sub second accuracy) for spotify including play, skip, seek, pause, repeat, shuffle and spotify connect
+* ~~Generate detailed events (sub second accuracy) for spotify including play, skip, seek, pause, repeat, shuffle and spotify connect~~ (discontinued)
 
 Also contains scripts for useful things:
 
-* Import last three months of listening history from spotify data export (gdpr.py)
+* Import last three months of listening history from spotify data export (scripts/gdpr.py)
 * Move songs from one playlist to another if not saved within 30 days of being added (scripts/sounds_good.py)
 
 Coming soon:
