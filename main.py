@@ -115,23 +115,21 @@ def perform_update(db: DbStore, creds: Credentials):
     update_albums(db, creds)
 
 
-def do_main(do_upload=True):
+def do_main():
     db = DbStore()
     creds = get_credentials()
 
     download_and_store_history(db, creds)
     perform_update(db, creds)
 
-    # Backup
-    if do_upload:
-        upload()
+    upload()
 
     logging.info("Done!")
 
 
 def main():
     try:
-        do_main(len(sys.argv) == 2 and sys.argv[1] == "--no-upload")
+        do_main()
     except Exception as e:
         logging.exception("An exception occurred:")
         raise e
