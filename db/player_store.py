@@ -5,6 +5,7 @@ import sqlite3
 import util
 import logging
 
+
 class MongoStore:
 
     def __init__(self):
@@ -65,16 +66,21 @@ class Sqlite3Store:
 
         return list(set(ids))
 
-    def player_states_after_time_asc(self, after_timestamp: float):
-        count = self.conn.execute("select count(*) from player where timestamp > ? order by timestamp ASC", (after_timestamp,))
+    def player_states_after_time_asc(self, after_timestamp: float, limit=None):
+        count = self.conn.execute("select count(*) from player where timestamp > ? order by timestamp ASC",
+                                  (after_timestamp,))
         n = count.fetchall()[0][0]
         logging.info("COUNT events = {}".format(n))
         print("COUNT IS {}".format(n))
+
         res = self.conn.execute("select * from player where timestamp > ? order by timestamp ASC", (after_timestamp,))
         return self._result_to_json(res)
 
-    def player_get_states_asc_timestamp(self, after_timestamp: float):
-        res = self.conn.execute("select * from player order by timestamp ASC")
+    def player_get_states_asc_timestamp(self, after_timestamp: float, limit=None):
+        if limit is None:
+            res = self.conn.execute("select * from player order by timestamp ASC")
+        else:
+            res = self.conn.execute("select * from player order by timestamp ASC limit {}".format(limit))
         return self._result_to_json(res)
 
     def _result_to_json(self, res):
@@ -135,10 +141,15 @@ class Sqlite3Store:
             self._safe_subget(state, "device", "name"),
         )
 
-    def delete_states(self):
+    def delete_states(self, limit_timestamp=None):
         # Delete old states
         timestamp = (time.time() - 86400) * 1000
-        self.conn.execute("delete from player where timestamp < ?", (timestamp,))
+        if limit_timestamp is None:
+            self.conn.execute("delete from player where timestamp < ?", (timestamp,))
+        else:
+            self.conn.execute("delete from player where timestamp < ? and timestamp >= ?",
+                              (timestamp, limit_timestamp,))
+
         self.conn.commit()
         self.conn.execute("vacuum")
         self.conn.commit()

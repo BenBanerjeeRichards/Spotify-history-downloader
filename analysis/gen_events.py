@@ -14,6 +14,7 @@ SKIP_THRESH = CONFIG["skip_thresh"]
 CLEAN_BATCH_SIZE = 1000
 INACTIVE_TIME_THRESH_MS = CONFIG["inactive_time_thresh_ms"]  # If more than 1s apart create separate events
 SEEK_LIMIT = CONFIG["seek_limit"]
+MAX_EVENT_PROC_BATCH = 100000  # How many raw states to pull at once from database. Too large will lead to death via OOM
 
 
 def unix_to_iso(timestamp_ms):
