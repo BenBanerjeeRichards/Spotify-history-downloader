@@ -57,12 +57,11 @@ def config():
 
     for location in possible_locations:
         path = os.path.expanduser(location)
-        logging.info("Checking " + path)
+        logging.info("Searching for config at " + path)
 
         if os.path.isfile(path):
             logging.info("Found at " + path)
             CONFIG = yaml.load(open(path))
-            logging.info("Loaded! {}".format(CONFIG))
             logging.info("Returning from config {}".format(CONFIG))
 
     if os.path.isfile(get_path("config-ben.yml")):

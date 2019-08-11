@@ -125,7 +125,7 @@ def main():
     try:
         do_main()
     except Exception as e:
-        logging.exception("An exception occured:")
+        logging.exception("An exception occurred:")
         raise e
 
 
