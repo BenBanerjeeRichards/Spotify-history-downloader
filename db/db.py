@@ -335,8 +335,13 @@ class DbStore:
 
     def add_genre_to_artist(self, artist_id, genre_name):
         genre_id = self.add_genre_if_not_exists(genre_name)
+
         with Cursor(self) as cur:
-            cur.execute("insert into artist_genre values (?, ?)", (artist_id, genre_id))
+            # Check that (artist_id, genre_id) doesn't already exist
+            duplicate_check = cur.execute("select count(*) from artist_genre where artist_id=? and genre_id=?", (artist_id, genre_id))
+            existing_items_count = duplicate_check.fetchone()[0]
+            if existing_items_count == 0:
+                cur.execute("insert into artist_genre values (?, ?)", (artist_id, genre_id))
 
     def migrate_genre(self):
         logging.info("(dave attenborough in hushed tones) And so, the mass genre migration begins")
